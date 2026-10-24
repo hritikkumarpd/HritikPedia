@@ -1,0 +1,26 @@
+{
+  "name": "@hritikpedia/shared",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./db": "./src/db.js",
+    "./auth": "./src/auth.js",
+    "./permissions": "./src/permissions.js",
+    "./validation": "./src/validation.js",
+    "./watermark": "./src/watermark.js",
+    "./payment": "./src/payment.js",
+    "./audit": "./src/audit.js",
+    "./brand": "./src/brand.js",
+    "./data": "./src/data.js",
+    "./ads": "./src/ads.js",
+    "./messaging": "./src/messaging.js"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.11",
+    "bcryptjs": "^3.0.3",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.23.1"
+  }
+}

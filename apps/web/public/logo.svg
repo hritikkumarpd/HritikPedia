@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 240" fill="none" width="100%" height="100%">
+  <defs>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1688FF"/>
+      <stop offset="100%" stop-color="#087BFF"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFD058"/>
+      <stop offset="100%" stop-color="#FFB923"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ICON GROUP -->
+  <g transform="translate(185, 10) scale(0.65)">
+    <!-- Graduation Cap Top Diamond -->
+    <polygon points="100,20 185,55 100,90 15,55" fill="#07172B"/>
+    <!-- Graduation Cap Base/Skullcap -->
+    <path d="M45,68 L45,95 C45,115 155,115 155,95 L155,68 Z" fill="#0B1D36"/>
+    <!-- Tassel Ribbon & Bobble -->
+    <path d="M100,55 C120,55 135,70 142,85 L145,115" stroke="url(#goldGrad)" stroke-width="4" stroke-linecap="round" fill="none"/>
+    <polygon points="140,115 150,115 147,135 143,135" fill="url(#goldGrad)"/>
+
+    <!-- Open Book Base (Back cover) -->
+    <path d="M100,105 C75,100 25,110 5,145 C35,145 75,142 100,158 C125,142 165,145 195,145 C175,110 125,100 100,105 Z" fill="#087BFF"/>
+
+    <!-- Open Book Pages (White & Blue Leaves) -->
+    <path d="M100,108 C78,103 35,112 18,140 C42,139 78,138 100,152 C122,138 158,139 182,140 C165,112 122,103 100,108 Z" fill="#FFFFFF" stroke="#07172B" stroke-width="4"/>
+    <path d="M100,112 L100,150" stroke="#07172B" stroke-width="4" stroke-linecap="round"/>
+
+    <!-- Left Page Inner Lines -->
+    <path d="M38,122 C55,120 75,123 88,128" stroke="#087BFF" stroke-width="3" stroke-linecap="round"/>
+    <path d="M40,132 C56,130 76,133 88,138" stroke="#087BFF" stroke-width="3" stroke-linecap="round"/>
+
+    <!-- Right Page Inner Lines -->
+    <path d="M112,128 C125,123 145,120 162,122" stroke="#087BFF" stroke-width="3" stroke-linecap="round"/>
+    <path d="M112,138 C124,133 144,130 160,132" stroke="#087BFF" stroke-width="3" stroke-linecap="round"/>
+  </g>
+
+  <!-- BRAND TEXT -->
+  <text x="250" y="165" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="44" letter-spacing="-0.5">
+    <tspan fill="#07172B">HRITIK</tspan><tspan fill="#087BFF">PEDIA</tspan>
+  </text>
+
+  <!-- OFFICIAL TAGLINE -->
+  <text x="250" y="202" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="16" letter-spacing="0.2">
+    <tspan fill="#07172B">Stop Searching. Start Learning</tspan><tspan fill="#087BFF">.</tspan>
+  </text>
+</svg>

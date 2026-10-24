@@ -1,0 +1,31 @@
+{
+  "name": "hritikpedia",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Hritikpedia - Complete Educational Notes Platform",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "node scripts/dev.js",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "dev:admin": "npm run dev --workspace=apps/admin",
+    "build:web": "npm run build --workspace=apps/web",
+    "build:admin": "npm run build --workspace=apps/admin",
+    "build": "npm run build:web && npm run build:admin",
+    "db:migrate": "node database/migrate.js",
+    "db:seed": "node database/migrate.js --seed",
+    "test": "node scripts/test-runner.js"
+  },
+  "keywords": [
+    "education",
+    "notes",
+    "hritikpedia",
+    "computer-science",
+    "study-notes"
+  ],
+  "author": "Hritikpedia Engineering",
+  "license": "UNLICENSED"
+}
