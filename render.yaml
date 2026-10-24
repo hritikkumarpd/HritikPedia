@@ -1,0 +1,50 @@
+services:
+  # Public Web Platform (Port 3000)
+  - type: web
+    name: hritikpedia-web
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm ci && npm run build:web
+    startCommand: npm run start:web
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false
+
+  # Staff Admin Console (Port 3001)
+  - type: web
+    name: hritikpedia-admin
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm ci && npm run build:admin
+    startCommand: npm run start:admin
+    healthCheckPath: /api/admin/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false

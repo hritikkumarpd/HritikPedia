@@ -1,0 +1,25 @@
+name: hritikpedia
+services:
+  - name: web
+    type: web
+    instance_type: nano
+    regions:
+      - fra
+    build:
+      type: buildpack
+      build_command: npm ci && npm run build:web
+      run_command: npm run start:web
+    ports:
+      - port: 3000
+        path: /
+    health_checks:
+      - http:
+          path: /api/health
+          port: 3000
+        interval: 30
+        timeout: 5
+    env:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"

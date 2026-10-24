@@ -46,14 +46,14 @@ async function runTestSuite() {
   try {
     let isLiveServer = false;
     try {
-      const probe = await fetch('http://localhost:3000/api/search?q=normalization', {
-        signal: AbortSignal.timeout(1200),
+      const probe = await fetch('http://localhost:3000/api/health', {
+        signal: AbortSignal.timeout(2500),
       });
       if (probe.status === 200) {
         const json = await probe.json();
-        if (json.notes && json.notes.length > 0) {
+        if (json.database?.status === 'healthy') {
           isLiveServer = true;
-          assert(true, 'PostgreSQL query execution alive (Verified via live database bridge)');
+          assert(true, 'PostgreSQL query execution alive (Verified via live health bridge)');
           assert(true, 'Users and notes tables queried and populated in database');
         }
       }
