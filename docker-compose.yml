@@ -1,0 +1,48 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: hritikpedia-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: hritikpedia
+      POSTGRES_USER: hritikpedia_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-ProductionSecureDBPassword2026!}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hritikpedia_user -d hritikpedia"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hritikpedia-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://hritikpedia_user:${DB_PASSWORD:-ProductionSecureDBPassword2026!}@postgres:5432/hritikpedia?sslmode=disable
+      - JWT_SECRET=${JWT_SECRET:-hritikpedia_prod_super_secure_random_jwt_secret_key_2026_993810293847}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      - NEXT_PUBLIC_ADMIN_URL=${NEXT_PUBLIC_ADMIN_URL:-http://localhost:3001}
+      - SUPER_ADMIN_EMAIL=${SUPER_ADMIN_EMAIL:-admin@hritikpedia.com}
+      - SUPER_ADMIN_PASSWORD=${SUPER_ADMIN_PASSWORD:-Admin@Hritikpedia2026}
+      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID:-rzp_test_placeholder}
+      - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET:-placeholder}
+      - RAZORPAY_WEBHOOK_SECRET=${RAZORPAY_WEBHOOK_SECRET:-placeholder}
+    volumes:
+      - storage_data:/app/storage/private
+
+volumes:
+  postgres_data:
+  storage_data:

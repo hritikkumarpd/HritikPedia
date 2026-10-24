@@ -15,6 +15,9 @@
     "build:web": "npm run build --workspace=apps/web",
     "build:admin": "npm run build --workspace=apps/admin",
     "build": "npm run build:web && npm run build:admin",
+    "start": "node scripts/start.js",
+    "start:web": "npm run start --workspace=apps/web",
+    "start:admin": "npm run start --workspace=apps/admin",
     "db:migrate": "node database/migrate.js",
     "db:seed": "node database/migrate.js --seed",
     "test": "node scripts/test-runner.js"
