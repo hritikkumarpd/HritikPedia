@@ -29,7 +29,12 @@ export async function getDb() {
     try {
       pool = new Pool({
         connectionString,
-        ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false,
+        ssl:
+          process.env.DATABASE_SSL === 'true' ||
+          connectionString.includes('sslmode=require') ||
+          connectionString.includes('neon.tech')
+            ? { rejectUnauthorized: false }
+            : false,
         min: parseInt(process.env.DATABASE_POOL_MIN || '2', 10),
         max: parseInt(process.env.DATABASE_POOL_MAX || '10', 10),
         idleTimeoutMillis: 30000,

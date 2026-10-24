@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { isValidEmail } from '@hritikpedia/shared/validation';
 import { checkRateLimit, recordSecurityEvent, SECURITY_EVENT_TYPES } from '@hritikpedia/shared/audit';
+import { verifyCaptcha } from '@hritikpedia/shared/captcha';
 
 export async function POST(request) {
   const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
@@ -14,7 +15,17 @@ export async function POST(request) {
   }
 
   try {
-    const { email } = await request.json();
+    const { email, captchaToken } = await request.json();
+
+    // Enforce CAPTCHA bot defense on password reset
+    const captchaCheck = await verifyCaptcha({
+      token: captchaToken,
+      ipAddress: ip,
+      action: 'forgot_password',
+    });
+    if (!captchaCheck.success) {
+      return NextResponse.json({ error: captchaCheck.error || 'Security verification failed' }, { status: 400 });
+    }
 
     if (!isValidEmail(email)) {
       return NextResponse.json({ error: 'Please provide a valid email address' }, { status: 400 });

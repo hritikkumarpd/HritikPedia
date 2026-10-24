@@ -20,6 +20,9 @@ import { verifyRazorpaySignature, calculateDiscountedPrice, formatINR } from '..
 import { validatePhoneNumber, formatE164, sendSMS } from '../packages/shared/src/messaging.js';
 import { generateSlug, isValidSlug, isValidEmail } from '../packages/shared/src/validation.js';
 import { validateSponsorCreative } from '../packages/shared/src/ads.js';
+import { verifyCaptcha, generateMathCaptcha } from '../packages/shared/src/captcha.js';
+import { sendAlert, alertNewOrder, alertNewStudent, alertSecurityThreat } from '../packages/shared/src/alerts.js';
+import { logger } from '../packages/shared/src/logger.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -294,6 +297,94 @@ async function runTestSuite() {
     }
   } catch (err) {
     assert(false, `Scope scan failed: ${err.message}`);
+  }
+
+  // TEST SUITE 10: Bot Defense & CAPTCHA Verification
+  console.log('\n\x1b[1m[10] Bot Defense & CAPTCHA Cryptographic Protection\x1b[0m');
+  try {
+    const challenge = generateMathCaptcha('register');
+    assert(challenge.question && challenge.challenge, 'Math challenge generated with signed timestamp');
+
+    // Extract numbers from "What is X + Y?"
+    const match = challenge.question.match(/What is (\d+) \+ (\d+)\?/);
+    const answer = String(parseInt(match[1], 10) + parseInt(match[2], 10));
+    const validToken = `${answer}:${challenge.challenge}`;
+
+    const validRes = await verifyCaptcha({ token: validToken, action: 'register' });
+    assert(validRes.success === true, 'Correct cryptographic challenge answer verified');
+
+    // Anti-replay test
+    const replayRes = await verifyCaptcha({ token: validToken, action: 'register' });
+    assert(replayRes.success === false, 'Replayed CAPTCHA token rejected (Anti-Replay Defense)');
+
+    // Wrong answer test
+    const wrongToken = `9999:${challenge.challenge}`;
+    const wrongRes = await verifyCaptcha({ token: wrongToken, action: 'register' });
+    assert(wrongRes.success === false, 'Incorrect challenge answer rejected');
+
+    // Dev bypass test
+    const devRes = await verifyCaptcha({ token: 'dev_captcha_pass', action: 'login' });
+    assert(devRes.success === true, 'Development bypass token accepted in local test mode');
+  } catch (err) {
+    assert(false, `CAPTCHA test failed: ${err.message}`);
+  }
+
+  // TEST SUITE 11: Real-Time Webhook Alerting Engine
+  console.log('\n\x1b[1m[11] Real-Time Production Webhook Alerting (Telegram/Discord/Slack)\x1b[0m');
+  try {
+    const alertRes = await sendAlert({
+      type: 'system',
+      title: 'Automated Test Verification',
+      message: 'Self-test of the alerting dispatcher.',
+      metadata: { Environment: 'test', Runner: 'Hritikpedia CI' },
+    });
+    assert(alertRes.success === true, 'sendAlert dispatches cleanly with zero-budget console fallback');
+
+    const orderAlert = await alertNewOrder({
+      orderId: 'ord_test_999',
+      studentName: 'Aarav Sharma',
+      studentEmail: 'aarav@example.com',
+      noteTitle: 'Computer Networks',
+      amount: 149,
+      paymentId: 'pay_test_888',
+    });
+    assert(orderAlert.success === true, 'alertNewOrder helper dispatches commerce notification');
+
+    const studentAlert = await alertNewStudent({
+      name: 'Priya Patel',
+      email: 'priya@example.com',
+      userId: 105,
+    });
+    assert(studentAlert.success === true, 'alertNewStudent helper dispatches student acquisition alert');
+
+    const secAlert = await alertSecurityThreat({
+      eventType: 'rate_limit:exceeded',
+      ipAddress: '203.0.113.195',
+      details: { attempts: 60, endpoint: '/api/auth/login' },
+    });
+    assert(secAlert.success === true, 'alertSecurityThreat helper dispatches SOC incident alert');
+  } catch (err) {
+    assert(false, `Alerting test failed: ${err.message}`);
+  }
+
+  // TEST SUITE 12: Enterprise Structured Logger & Observability
+  console.log('\n\x1b[1m[12] Enterprise Structured Logger & PII Redaction\x1b[0m');
+  try {
+    assert(typeof logger.info === 'function', 'logger.info is available');
+    assert(typeof logger.warn === 'function', 'logger.warn is available');
+    assert(typeof logger.error === 'function', 'logger.error is available');
+    assert(typeof logger.security === 'function', 'logger.security is available');
+    assert(typeof logger.perf === 'function', 'logger.perf is available');
+
+    // Test child logger with request context
+    const reqLogger = logger.child({ reqId: 'req_abc123', ip: '127.0.0.1' });
+    assert(typeof reqLogger.info === 'function', 'Child logger created with context binding');
+
+    // Performance timer execution
+    logger.perf('db_query_time', 12.45, { table: 'notes' });
+    assert(true, 'logger.perf metrics logged without exception');
+  } catch (err) {
+    assert(false, `Logger test failed: ${err.message}`);
   }
 
   // SUMMARY

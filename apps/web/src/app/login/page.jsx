@@ -4,11 +4,13 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import BrandLogo from '../../components/BrandLogo';
+import CaptchaWidget from '../../components/CaptchaWidget';
 import { Mail, Lock, ArrowRight, AlertCircle, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [captchaToken, setCaptchaToken] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
@@ -22,7 +24,7 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, captchaToken }),
       });
 
       const data = await res.json();
@@ -103,6 +105,12 @@ export default function LoginPage() {
               />
             </div>
           </div>
+
+          <CaptchaWidget
+            action="login"
+            onVerify={(tok) => setCaptchaToken(tok)}
+            onExpire={() => setCaptchaToken('')}
+          />
 
           <button
             type="submit"

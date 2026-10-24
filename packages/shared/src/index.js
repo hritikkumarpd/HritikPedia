@@ -9,3 +9,6 @@ export * from './audit.js';
 export * from './data.js';
 export * from './ads.js';
 export * from './messaging.js';
+export * from './captcha.js';
+export * from './alerts.js';
+export * from './logger.js';

@@ -5,13 +5,19 @@ export async function GET() {
   const dbHealth = await checkHealth();
   const isHealthy = dbHealth.status === 'healthy';
 
+  const mem = process.memoryUsage();
   return NextResponse.json(
     {
       app: 'Hritikpedia Public Web Platform',
       status: isHealthy ? 'ok' : 'degraded',
-      uptime: process.uptime(),
+      uptime: Math.round(process.uptime()),
       timestamp: new Date().toISOString(),
       database: dbHealth,
+      memory: {
+        heapUsedMb: Math.round(mem.heapUsed / 1024 / 1024),
+        rssMb: Math.round(mem.rss / 1024 / 1024),
+      },
+      env: process.env.NODE_ENV || 'development',
     },
     { status: isHealthy ? 200 : 503 }
   );

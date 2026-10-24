@@ -3,6 +3,7 @@ import { query } from '@hritikpedia/shared/db';
 import { verifyPassword, signToken } from '@hritikpedia/shared/auth';
 import { isAdmin } from '@hritikpedia/shared/permissions';
 import { checkRateLimit, recordSecurityEvent, SECURITY_EVENT_TYPES } from '@hritikpedia/shared/audit';
+import { verifyCaptcha } from '@hritikpedia/shared/captcha';
 
 export async function POST(request) {
   const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
@@ -24,7 +25,17 @@ export async function POST(request) {
   }
 
   try {
-    const { email, password } = await request.json();
+    const { email, password, captchaToken } = await request.json();
+
+    // Enforce CAPTCHA bot defense on administrative console
+    const captchaCheck = await verifyCaptcha({
+      token: captchaToken,
+      ipAddress: ip,
+      action: 'admin_login',
+    });
+    if (!captchaCheck.success) {
+      return NextResponse.json({ error: captchaCheck.error || 'Administrative human verification failed' }, { status: 400 });
+    }
 
     if (!email || !password) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 400 });

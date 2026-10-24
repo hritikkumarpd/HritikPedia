@@ -15,7 +15,10 @@
     "./brand": "./src/brand.js",
     "./data": "./src/data.js",
     "./ads": "./src/ads.js",
-    "./messaging": "./src/messaging.js"
+    "./messaging": "./src/messaging.js",
+    "./captcha": "./src/captcha.js",
+    "./alerts": "./src/alerts.js",
+    "./logger": "./src/logger.js"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.11",

@@ -1,4 +1,5 @@
 import { query } from './db.js';
+import { alertSecurityThreat } from './alerts.js';
 
 /**
  * Audit and Security Event Types
@@ -18,6 +19,16 @@ export const SECURITY_EVENT_TYPES = {
   CONTENT_MUTATION: 'content:mutation',
   ROLE_CHANGED: 'role:changed',
 };
+
+/**
+ * High-severity events that trigger instant SOC alerting
+ */
+const HIGH_SEVERITY_EVENTS = new Set([
+  SECURITY_EVENT_TYPES.ACCESS_DENIED_ADMIN,
+  SECURITY_EVENT_TYPES.PAYMENT_SIGNATURE_FAILED,
+  SECURITY_EVENT_TYPES.RATE_LIMIT_EXCEEDED,
+  SECURITY_EVENT_TYPES.WEBHOOK_INVALID,
+]);
 
 /**
  * Records an immutable security event into database.
@@ -47,6 +58,11 @@ export async function recordSecurityEvent({
   } catch (err) {
     // Failsafe logging to console if DB write fails
     console.error(`[SECURITY ALERT] ${eventType} from ${ipAddress}:`, safeDetails, `(DB Log Error: ${err.message})`);
+  }
+
+  // Real-time SOC Webhook Alerting for High-Severity Threats
+  if (HIGH_SEVERITY_EVENTS.has(eventType)) {
+    alertSecurityThreat({ eventType, ipAddress, details: safeDetails }).catch(() => {});
   }
 }
 

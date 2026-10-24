@@ -3,12 +3,14 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import BrandLogo from '../../components/BrandLogo';
+import CaptchaWidget from '../../components/CaptchaWidget';
 import { Shield, Lock, Mail, AlertTriangle, ArrowRight, Loader2 } from 'lucide-react';
 
 export default function AdminLoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [captchaToken, setCaptchaToken] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -21,7 +23,7 @@ export default function AdminLoginPage() {
       const res = await fetch('/api/admin/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, captchaToken }),
       });
 
       const data = await res.json();
@@ -106,6 +108,12 @@ export default function AdminLoginPage() {
                 />
               </div>
             </div>
+
+            <CaptchaWidget
+              action="admin_login"
+              onVerify={(tok) => setCaptchaToken(tok)}
+              onExpire={() => setCaptchaToken('')}
+            />
 
             <div className="pt-2">
               <button

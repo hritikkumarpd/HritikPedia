@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import BrandLogo from '../../components/BrandLogo';
+import CaptchaWidget from '../../components/CaptchaWidget';
 import { User, Mail, Lock, ArrowRight, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react';
 
 export default function RegisterPage() {
@@ -11,6 +12,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [agreeTerms, setAgreeTerms] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
@@ -30,7 +32,7 @@ export default function RegisterPage() {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, captchaToken }),
       });
 
       const data = await res.json();
@@ -141,6 +143,12 @@ export default function RegisterPage() {
               .
             </label>
           </div>
+
+          <CaptchaWidget
+            action="register"
+            onVerify={(tok) => setCaptchaToken(tok)}
+            onExpire={() => setCaptchaToken('')}
+          />
 
           <button
             type="submit"

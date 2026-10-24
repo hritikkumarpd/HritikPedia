@@ -3,10 +3,12 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import BrandLogo from '../../components/BrandLogo';
+import CaptchaWidget from '../../components/CaptchaWidget';
 import { Mail, ArrowRight, AlertCircle, CheckCircle2, Loader2, ArrowLeft } from 'lucide-react';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
+  const [captchaToken, setCaptchaToken] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -20,7 +22,7 @@ export default function ForgotPasswordPage() {
       const res = await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, captchaToken }),
       });
 
       if (res.ok) {
@@ -91,6 +93,12 @@ export default function ForgotPasswordPage() {
                 />
               </div>
             </div>
+
+            <CaptchaWidget
+              action="forgot_password"
+              onVerify={(tok) => setCaptchaToken(tok)}
+              onExpire={() => setCaptchaToken('')}
+            />
 
             <button
               type="submit"

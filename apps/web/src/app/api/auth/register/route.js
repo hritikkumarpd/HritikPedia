@@ -4,6 +4,8 @@ import { hashPassword, signToken } from '@hritikpedia/shared/auth';
 import { isValidEmail, isValidPassword } from '@hritikpedia/shared/validation';
 import { checkRateLimit, recordSecurityEvent, SECURITY_EVENT_TYPES } from '@hritikpedia/shared/audit';
 import { ROLES } from '@hritikpedia/shared/permissions';
+import { verifyCaptcha } from '@hritikpedia/shared/captcha';
+import { alertNewStudent } from '@hritikpedia/shared/alerts';
 
 export async function POST(request) {
   const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
@@ -24,7 +26,17 @@ export async function POST(request) {
   }
 
   try {
-    const { name, email, password } = await request.json();
+    const { name, email, password, captchaToken } = await request.json();
+
+    // Enforce CAPTCHA bot defense
+    const captchaCheck = await verifyCaptcha({
+      token: captchaToken,
+      ipAddress: ip,
+      action: 'register',
+    });
+    if (!captchaCheck.success) {
+      return NextResponse.json({ error: captchaCheck.error || 'Security verification failed' }, { status: 400 });
+    }
 
     if (!name || typeof name !== 'string' || name.trim().length < 2) {
       return NextResponse.json({ error: 'Name must be at least 2 characters long' }, { status: 400 });
@@ -72,6 +84,9 @@ export async function POST(request) {
       userAgent,
       details: { email: cleanEmail, role: ROLES.STUDENT },
     });
+
+    // Real-time notification for community growth
+    alertNewStudent({ name: user.name, email: user.email, userId: user.id }).catch(() => {});
 
     // Create session token
     const token = signToken({

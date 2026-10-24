@@ -3,6 +3,7 @@ import { extractTokenFromRequest, verifyToken } from '@hritikpedia/shared/auth';
 import { query, transaction } from '@hritikpedia/shared/db';
 import { verifyPaymentSignature } from '@hritikpedia/shared/payment';
 import { recordSecurityEvent, SECURITY_EVENT_TYPES } from '@hritikpedia/shared/audit';
+import { alertNewOrder } from '@hritikpedia/shared/alerts';
 
 export async function POST(request) {
   const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
@@ -87,6 +88,17 @@ export async function POST(request) {
     // Fetch note slug to redirect reader
     const noteRes = await query('SELECT slug, title FROM notes WHERE id = $1', [order.note_id]);
     const noteSlug = noteRes.rows[0]?.slug;
+    const noteTitle = noteRes.rows[0]?.title || 'Study Note';
+
+    // Real-time Webhook Notification to Telegram/Discord/Slack
+    alertNewOrder({
+      orderId,
+      studentName: user.name || 'Learner',
+      studentEmail: user.email,
+      noteTitle,
+      amount: order.amount,
+      paymentId,
+    }).catch(() => {});
 
     return NextResponse.json({
       success: true,
