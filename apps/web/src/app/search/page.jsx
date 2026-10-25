@@ -27,7 +27,11 @@ function SearchContent() {
           n.title.toLowerCase().includes(q) ||
           n.description.toLowerCase().includes(q) ||
           n.subjectName.toLowerCase().includes(q) ||
-          n.topic?.toLowerCase().includes(q)
+          (n.topic && n.topic.toLowerCase().includes(q)) ||
+          (n.targetExamOrBoard && n.targetExamOrBoard.toLowerCase().includes(q)) ||
+          (n.department && n.department.toLowerCase().includes(q)) ||
+          (n.medium && n.medium.toLowerCase().includes(q)) ||
+          (n.topicsCovered && n.topicsCovered.some((t) => t.toLowerCase().includes(q)))
       )
     : [];
 
@@ -36,7 +40,9 @@ function SearchContent() {
         (s) =>
           s.name.toLowerCase().includes(q) ||
           s.description.toLowerCase().includes(q) ||
-          s.code.toLowerCase().includes(q)
+          s.code.toLowerCase().includes(q) ||
+          (s.targetExamOrBoard && s.targetExamOrBoard.toLowerCase().includes(q)) ||
+          (s.department && s.department.toLowerCase().includes(q))
       )
     : [];
 
@@ -62,14 +68,14 @@ function SearchContent() {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search across all notes, subjects, chapters, and articles..."
+              placeholder="Search UPSC, BPSC, BSEB 10th/12th, CBSE, AKTU, BEU, DBMS..."
               className="w-full px-3 py-2 text-sm sm:text-base bg-transparent text-[#26354B] focus:outline-hidden"
               autoFocus
             />
             {query && (
               <button
                 onClick={() => setQuery('')}
-                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-full mr-2"
+                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-full mr-2 cursor-pointer"
                 aria-label="Clear query"
               >
                 <X className="w-4 h-4" />
@@ -77,7 +83,7 @@ function SearchContent() {
             )}
           </div>
 
-          <div className="flex items-center justify-between mt-3 text-xs text-slate-500 px-2">
+          <div className="flex flex-wrap items-center justify-between gap-2 mt-3 text-xs text-slate-500 px-2">
             <span>
               {query ? (
                 <>Found <strong className="text-[#07172B]">{total}</strong> results for &ldquo;{query}&rdquo;</>
@@ -85,11 +91,14 @@ function SearchContent() {
                 'Enter a search term above'
               )}
             </span>
-            <div className="flex gap-2">
-              <span className="font-semibold text-slate-400">Try:</span>
-              <button onClick={() => setQuery('DBMS')} className="hover:text-[#087BFF] underline">DBMS</button>
-              <button onClick={() => setQuery('Operating')} className="hover:text-[#087BFF] underline">OS</button>
-              <button onClick={() => setQuery('STET')} className="hover:text-[#087BFF] underline">Bihar STET</button>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-bold text-slate-400">Quick Searches:</span>
+              <button onClick={() => setQuery('UPSC')} className="hover:text-[#087BFF] underline cursor-pointer">UPSC</button>
+              <button onClick={() => setQuery('BPSC')} className="hover:text-[#087BFF] underline cursor-pointer">BPSC</button>
+              <button onClick={() => setQuery('BSEB')} className="hover:text-[#087BFF] underline cursor-pointer">BSEB 12th</button>
+              <button onClick={() => setQuery('CBSE')} className="hover:text-[#087BFF] underline cursor-pointer">CBSE</button>
+              <button onClick={() => setQuery('AKTU')} className="hover:text-[#087BFF] underline cursor-pointer">AKTU B.Tech</button>
+              <button onClick={() => setQuery('DBMS')} className="hover:text-[#087BFF] underline cursor-pointer">DBMS</button>
             </div>
           </div>
         </div>
@@ -100,8 +109,23 @@ function SearchContent() {
             <Search className="w-10 h-10 text-slate-300 mx-auto mb-3" />
             <h3 className="text-base font-bold text-[#07172B]">No exact matches found</h3>
             <p className="text-xs text-slate-500 mt-1">
-              Try searching with broader terms like &ldquo;Computer Networks&rdquo;, &ldquo;Digital Logic&rdquo;, or &ldquo;Algorithms&rdquo;.
+              Try searching with broader terms like &ldquo;UPSC&rdquo;, &ldquo;BPSC&rdquo;, &ldquo;Physics&rdquo;, &ldquo;DBMS&rdquo;, or &ldquo;Operating Systems&rdquo;.
             </p>
+          </div>
+        )}
+
+        {/* Notes Results (Highest Priority) */}
+        {matchedNotes.length > 0 && (
+          <div className="mb-12">
+            <h2 className="text-lg font-bold text-[#07172B] mb-4 flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-[#087BFF]" />
+              <span>Matched Study Notes ({matchedNotes.length})</span>
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {matchedNotes.map((note) => (
+                <NoteCard key={note.id} note={note} />
+              ))}
+            </div>
           </div>
         )}
 
@@ -115,21 +139,6 @@ function SearchContent() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {matchedSubjects.map((sub) => (
                 <SubjectCard key={sub.id} subject={sub} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Notes Results */}
-        {matchedNotes.length > 0 && (
-          <div className="mb-12">
-            <h2 className="text-lg font-bold text-[#07172B] mb-4 flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-[#087BFF]" />
-              <span>Matched Study Notes ({matchedNotes.length})</span>
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {matchedNotes.map((note) => (
-                <NoteCard key={note.id} note={note} />
               ))}
             </div>
           </div>

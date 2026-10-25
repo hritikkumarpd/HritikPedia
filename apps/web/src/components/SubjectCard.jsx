@@ -13,6 +13,12 @@ import {
   Globe,
   BookOpen,
   ArrowRight,
+  Landmark,
+  School,
+  Atom,
+  Flame,
+  Calculator,
+  Compass,
 } from 'lucide-react';
 
 const ICON_MAP = {
@@ -24,6 +30,12 @@ const ICON_MAP = {
   GraduationCap,
   Code2,
   Globe,
+  Landmark,
+  School,
+  Atom,
+  Flame,
+  Calculator,
+  Compass,
 };
 
 export default function SubjectCard({ subject }) {
@@ -48,14 +60,27 @@ export default function SubjectCard({ subject }) {
             <IconComponent className="w-6 h-6" />
           </div>
 
-          <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 group-hover:bg-blue-50 group-hover:text-[#087BFF] transition-colors">
-            {subject.noteCount || 0} Notes
-          </span>
+          <div className="flex items-center gap-1.5">
+            {subject.targetExamOrBoard && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/60">
+                {subject.targetExamOrBoard}
+              </span>
+            )}
+            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 group-hover:bg-blue-50 group-hover:text-[#087BFF] transition-colors">
+              {subject.noteCount || 0} Notes
+            </span>
+          </div>
         </div>
 
         <h3 className="text-base font-bold text-[#07172B] group-hover:text-[#087BFF] transition-colors leading-snug">
           {subject.name}
         </h3>
+
+        {subject.department && (
+          <p className="mt-1 text-[11px] font-semibold text-slate-500">
+            {subject.department}
+          </p>
+        )}
 
         <p className="mt-2 text-xs text-[#64748B] line-clamp-3 leading-relaxed">
           {subject.description}

@@ -2,7 +2,6 @@ import React from 'react';
 import Link from 'next/link';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import BrandLogo from '../components/BrandLogo';
 import SearchHero from '../components/SearchHero';
 import NoteCard from '../components/NoteCard';
 import SubjectCard from '../components/SubjectCard';
@@ -12,6 +11,7 @@ import {
   INITIAL_SUBJECTS,
   INITIAL_NOTES,
   INITIAL_ARTICLES,
+  PAN_INDIA_DOMAINS,
 } from '@hritikpedia/shared/data';
 import {
   BookOpen,
@@ -23,14 +23,73 @@ import {
   Clock,
   Layers,
   Award,
-  Lock,
+  Landmark,
+  School,
+  Cpu,
+  GraduationCap,
+  Check,
+  Smartphone,
+  Globe,
+  Tag,
 } from 'lucide-react';
+
+export const metadata = {
+  title: 'HritikPedia — Pan-India Study Notes for UPSC, BPSC, BSEB, CBSE & Engineering',
+  description:
+    'Quality study notes, formula sheets, and chapter blueprints across Govt. Exams (UPSC/BPSC/SSC), School Boards (CBSE/BSEB 10th & 12th), and Engineering Universities (AKTU/BEU). Affordable micro-pricing starting from ₹0 to ₹49.',
+};
 
 export default function HomePage() {
   const featuredNotes = INITIAL_NOTES.filter((n) => n.isFeatured);
   const freeNotes = INITIAL_NOTES.filter((n) => n.isFree);
-  const premiumNotes = INITIAL_NOTES.filter((n) => !n.isFree);
   const featuredSubjects = INITIAL_SUBJECTS.filter((s) => s.isFeatured).slice(0, 6);
+
+  const DOMAIN_SHOWCASE = [
+    {
+      id: 'general_competitions',
+      title: 'Govt. & Competitive Exams',
+      target: 'UPSC CSE • BPSC • SSC CGL/CHSL • STET',
+      desc: 'Prelims & Mains GS blueprints, Bihar Special in Hindi medium, Topper handwritten notes, and high-yield Indian Polity.',
+      icon: Landmark,
+      color: 'bg-amber-500/10 text-amber-700 border-amber-200',
+      badge: 'National & State Exams',
+      link: '/notes?domain=general_competitions',
+      count: INITIAL_NOTES.filter((n) => n.domain === 'general_competitions').length,
+    },
+    {
+      id: 'school_boards',
+      title: '10th & 12th School Boards',
+      target: 'BSEB Bihar Board (हिंदी माध्यम) • CBSE Board • UP Board',
+      desc: 'Inter 12th Physics & Chemistry in Hindi, CBSE Organic Chemistry reaction mind-maps, and Class 10th NCERT formula sheets.',
+      icon: School,
+      color: 'bg-emerald-500/10 text-emerald-700 border-emerald-200',
+      badge: 'Matric & Inter (10th/12th)',
+      link: '/notes?domain=school_boards',
+      count: INITIAL_NOTES.filter((n) => n.domain === 'school_boards').length,
+    },
+    {
+      id: 'engineering',
+      title: 'Engineering Universities',
+      target: 'AKTU • BEU Bihar • MAKAUT • VTU • Autonomous',
+      desc: 'B.Tech semester-wise syllabus mapped notes for Computer Science, Electrical, and Mechanical. PYQ blueprints and diagrams.',
+      icon: Cpu,
+      color: 'bg-blue-500/10 text-[#087BFF] border-blue-200',
+      badge: 'University & Department Mapped',
+      link: '/notes?domain=engineering',
+      count: INITIAL_NOTES.filter((n) => n.domain === 'engineering').length,
+    },
+    {
+      id: 'general_degree',
+      title: 'General Degree Courses',
+      target: 'BCA • B.Sc • B.Com • BBA Semesters',
+      desc: 'Core programming theory, Python data structures, business economics, and database concepts for UG university exams.',
+      icon: GraduationCap,
+      color: 'bg-purple-500/10 text-purple-700 border-purple-200',
+      badge: 'Undergraduate Semesters',
+      link: '/notes?domain=general_degree',
+      count: INITIAL_NOTES.filter((n) => n.domain === 'general_degree').length,
+    },
+  ];
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F5F8FC]">
@@ -39,28 +98,28 @@ export default function HomePage() {
 
       <main className="flex-1">
         {/* HERO SECTION */}
-        <section className="relative overflow-hidden pt-12 pb-20 md:pt-20 md:pb-28 border-b border-slate-200/60 bg-gradient-to-b from-white via-[#F5F8FC] to-[#F5F8FC]">
+        <section className="relative overflow-hidden pt-12 pb-16 md:pt-20 md:pb-24 border-b border-slate-200/60 bg-gradient-to-b from-white via-[#F5F8FC] to-[#F5F8FC]">
           {/* Subtle Ambient Radial Glow */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[450px] bg-radial from-[#087BFF]/10 via-[#FFB923]/5 to-transparent blur-3xl pointer-events-none -z-10"></div>
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[850px] h-[480px] bg-radial from-[#087BFF]/12 via-[#FFB923]/6 to-transparent blur-3xl pointer-events-none -z-10"></div>
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            {/* Brand Logo Visual Badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200/80 text-[#087BFF] text-xs font-bold mb-8 shadow-xs">
-              <Sparkles className="w-4 h-4 text-[#FFB923]" />
-              <span>Dedicated Educational Notes Platform</span>
+            {/* Visual Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-[#087BFF] text-xs font-black mb-6 shadow-xs">
+              <span className="text-base">🇮🇳</span>
+              <span>Pan-India Study Notes Platform • Quality Education For Every Aspirant</span>
             </div>
 
-            {/* Official Headline & Subheadings */}
+            {/* Main Headline */}
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-[#07172B] tracking-tight max-w-4xl mx-auto leading-[1.12]">
-              Stop Searching. <span className="text-[#087BFF]">Start Learning.</span>
+              One Platform for <span className="text-[#087BFF]">Every Student</span> in India.
             </h1>
 
-            <p className="mt-5 text-xl sm:text-2xl font-bold text-[#0B1D36] max-w-2xl mx-auto tracking-tight">
-              Quality Study Notes. Smarter Preparation. Better Learning.
+            <p className="mt-5 text-lg sm:text-xl font-bold text-[#0B1D36] max-w-3xl mx-auto tracking-tight">
+              Govt. Exams (UPSC, BPSC, SSC) • 10th &amp; 12th Boards (CBSE, BSEB) • Engineering Universities (AKTU, BEU)
             </p>
 
-            <p className="mt-4 text-sm sm:text-base text-[#64748B] max-w-2xl mx-auto leading-relaxed">
-              Discover organized study notes, exam-focused resources, previous-year questions, and carefully structured learning materials—all in one place.
+            <p className="mt-3 text-sm sm:text-base text-[#64748B] max-w-2xl mx-auto leading-relaxed">
+              Access comprehensive chapter notes, toppers&apos; blueprints, and formula mind-maps. Affordable micro-pricing starting from <strong>₹0 (Free)</strong> to <strong>₹29–₹49</strong> so every student across India can study without financial barriers.
             </p>
 
             {/* Action Buttons */}
@@ -70,7 +129,7 @@ export default function HomePage() {
                 className="w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm text-white bg-[#087BFF] hover:bg-[#1688FF] shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2 group"
               >
                 <BookOpen className="w-4 h-4" />
-                <span>Explore Notes</span>
+                <span>Explore All Notes</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
               <Link
@@ -78,42 +137,111 @@ export default function HomePage() {
                 className="w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm text-[#07172B] bg-white hover:bg-slate-50 border border-slate-300 shadow-xs hover:border-slate-400 transition-all flex items-center justify-center gap-2"
               >
                 <Sparkles className="w-4 h-4 text-[#FFB923]" />
-                <span>Browse Free Resources</span>
+                <span>Browse Free Notes (₹0)</span>
               </Link>
             </div>
 
-            {/* Interactive Live Search Bar */}
-            <div className="mt-12">
+            {/* Live Search Bar */}
+            <div className="mt-10">
               <SearchHero />
               <div className="flex flex-wrap items-center justify-center gap-2 mt-3 text-xs text-slate-500">
-                <span className="font-semibold text-[#07172B]">Popular:</span>
-                <Link href="/notes/dbms-normalization-notes" className="hover:text-[#087BFF] bg-white px-2.5 py-1 rounded-md border border-slate-200">DBMS Normalization</Link>
-                <Link href="/notes/operating-systems-process-synchronization" className="hover:text-[#087BFF] bg-white px-2.5 py-1 rounded-md border border-slate-200">OS Concurrency</Link>
-                <Link href="/notes/digital-logic-k-maps-revision" className="hover:text-[#087BFF] bg-white px-2.5 py-1 rounded-md border border-slate-200">K-Maps</Link>
-                <Link href="/notes/bihar-stet-cs-syllabus-blueprint" className="hover:text-[#087BFF] bg-white px-2.5 py-1 rounded-md border border-slate-200">Bihar STET CS</Link>
+                <span className="font-bold text-[#07172B]">Popular Searches:</span>
+                <Link href="/notes?target=UPSC" className="hover:text-[#087BFF] bg-white px-2.5 py-1 rounded-md border border-slate-200">
+                  #UPSC_Polity
+                </Link>
+                <Link href="/notes?target=BPSC" className="hover:text-[#087BFF] bg-white px-2.5 py-1 rounded-md border border-slate-200">
+                  #BPSC_BiharSpecial
+                </Link>
+                <Link href="/notes?target=BSEB" className="hover:text-[#087BFF] bg-white px-2.5 py-1 rounded-md border border-slate-200 text-amber-700 font-medium">
+                  #BSEB_12th_हिंदी
+                </Link>
+                <Link href="/notes?target=CBSE" className="hover:text-[#087BFF] bg-white px-2.5 py-1 rounded-md border border-slate-200">
+                  #CBSE_12th_Chemistry
+                </Link>
+                <Link href="/notes?target=AKTU" className="hover:text-[#087BFF] bg-white px-2.5 py-1 rounded-md border border-slate-200">
+                  #AKTU_BTech_DBMS
+                </Link>
               </div>
             </div>
           </div>
         </section>
 
-        {/* TOP AD SLOT / SPONSOR PLACEMENT */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* 4 MAJOR PILLARS: PAN-INDIA CATEGORIES */}
+        <section className="py-12 md:py-16 bg-white border-b border-slate-200/80">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-3xl mx-auto mb-10">
+              <span className="text-xs font-bold text-[#087BFF] uppercase tracking-wider block mb-1">
+                Choose Your Domain
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#07172B] tracking-tight">
+                Curated For Every Academic &amp; Exam Goal
+              </h2>
+              <p className="mt-2 text-sm text-[#64748B]">
+                Whether you are targeting Civil Services, preparing for Board Exams, or clearing Engineering Semesters, find syllabus-verified study notes instantly.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {DOMAIN_SHOWCASE.map((domain) => {
+                const Icon = domain.icon;
+                return (
+                  <Link
+                    key={domain.id}
+                    href={domain.link}
+                    className="p-6 rounded-2xl bg-slate-50/80 hover:bg-white border border-slate-200/90 hover:border-[#087BFF]/50 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center border ${domain.color}`}>
+                          <Icon className="w-6 h-6" />
+                        </div>
+                        <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-slate-200/70 text-[#07172B]">
+                          {domain.count} Notes
+                        </span>
+                      </div>
+
+                      <h3 className="text-base font-bold text-[#07172B] group-hover:text-[#087BFF] transition-colors mb-1">
+                        {domain.title}
+                      </h3>
+
+                      <p className="text-[11px] font-bold text-[#087BFF] mb-2">
+                        {domain.target}
+                      </p>
+
+                      <p className="text-xs text-[#64748B] leading-relaxed line-clamp-3">
+                        {domain.desc}
+                      </p>
+                    </div>
+
+                    <div className="pt-4 mt-4 border-t border-slate-200/60 flex items-center justify-between text-xs font-bold text-[#087BFF] group-hover:text-[#1688FF]">
+                      <span>Browse Notes</span>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* TOP AD SLOT */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <AdSlot slotId="home_top" />
         </div>
 
         {/* POPULAR SUBJECTS SECTION */}
-        <section className="py-16 md:py-20">
+        <section className="py-12 md:py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-10">
               <div>
                 <span className="text-xs font-bold text-[#087BFF] uppercase tracking-wider block mb-1">
-                  Curated Catalog
+                  University &amp; Board Syllabi
                 </span>
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-[#07172B] tracking-tight">
-                  Popular Subjects
+                  Featured Subjects
                 </h2>
                 <p className="mt-2 text-sm text-[#64748B] max-w-xl">
-                  Comprehensive notes organized by engineering semester curricula and competitive exam syllabi.
+                  Subject units mapped to university curricula (AKTU, BEU), school boards (CBSE, BSEB), and competitive syllabus.
                 </p>
               </div>
               <Link
@@ -139,20 +267,20 @@ export default function HomePage() {
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-10">
               <div>
                 <span className="text-xs font-bold text-[#087BFF] uppercase tracking-wider block mb-1">
-                  Top Recommended
+                  High-Yield Revision
                 </span>
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-[#07172B] tracking-tight">
-                  Featured Study Notes
+                  Featured Study Notes &amp; Blueprints
                 </h2>
                 <p className="mt-2 text-sm text-[#64748B] max-w-xl">
-                  Reviewed chapter notes with illustrated diagrams, worked examples, and online watermarked previews.
+                  Notes with concept diagrams, formula summaries, Hindi and English explanations, and watermarked canvas previews.
                 </p>
               </div>
               <Link
                 href="/notes"
                 className="mt-4 md:mt-0 text-sm font-bold text-[#087BFF] hover:text-[#1688FF] flex items-center gap-1 group"
               >
-                <span>View Full Notes Catalog</span>
+                <span>View Full Notes Catalog ({INITIAL_NOTES.length})</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
@@ -166,12 +294,12 @@ export default function HomePage() {
         </section>
 
         {/* MID-PAGE AD SLOT */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <AdSlot slotId="home_between_sections" />
         </div>
 
         {/* FREE RESOURCES SECTION */}
-        <section className="py-16 md:py-20">
+        <section className="py-12 md:py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="bg-gradient-to-br from-[#07172B] via-[#0B1D36] to-[#0A2548] rounded-3xl p-8 sm:p-12 text-white shadow-lg overflow-hidden relative">
               <div className="relative z-10 max-w-2xl mb-10">
@@ -183,7 +311,7 @@ export default function HomePage() {
                   Free Revision Materials &amp; Blueprints
                 </h2>
                 <p className="mt-3 text-sm text-slate-300 leading-relaxed">
-                  Start your preparation immediately without payment. Read formulas, fast reference summaries, and syllabus breakdowns in our online reader.
+                  Start your preparation immediately without spending anything. Read formula sheets, quick chapter summaries, and syllabus breakdowns in our online reader.
                 </p>
               </div>
 
@@ -199,7 +327,7 @@ export default function HomePage() {
                           {note.subjectName}
                         </span>
                         <span className="text-[10px] font-black px-2 py-0.5 rounded bg-emerald-500 text-white">
-                          FREE ACCESS
+                          FREE (₹0)
                         </span>
                       </div>
                       <h3 className="text-lg font-bold text-white mb-2">
@@ -229,18 +357,18 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* WHY HRITIKPEDIA? */}
+        {/* WHY HRITIKPEDIA? — PAN-INDIA ADVANTAGE */}
         <section className="py-16 md:py-20 bg-white border-t border-slate-200/80">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-16">
               <span className="text-xs font-bold text-[#087BFF] uppercase tracking-wider block mb-1">
-                The Platform Advantage
+                The HritikPedia Advantage
               </span>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-[#07172B] tracking-tight">
-                Why Study with Hritikpedia?
+                Designed for Every Student Across India
               </h2>
               <p className="mt-3 text-sm text-[#64748B]">
-                Engineered from the ground up for focused learning, clear visual summaries, and distraction-free study.
+                Engineered for affordable learning, bilingual support, verified high-yield notes, and zero clutter.
               </p>
             </div>
 
@@ -250,10 +378,10 @@ export default function HomePage() {
                   <BookOpen className="w-6 h-6" />
                 </div>
                 <h3 className="text-base font-bold text-[#07172B] mb-2">
-                  Organized Learning
+                  All Domains in One Place
                 </h3>
                 <p className="text-xs text-[#64748B] leading-relaxed">
-                  No scattered PDFs or disorganized drive links. Every note is indexed by subject, chapter, and exam weightage.
+                  UPSC, BPSC, SSC, BSEB 10th/12th, CBSE, AKTU, and BEU Engineering notes—all organized systematically by department and exam.
                 </p>
               </div>
 
@@ -262,10 +390,10 @@ export default function HomePage() {
                   <Award className="w-6 h-6" />
                 </div>
                 <h3 className="text-base font-bold text-[#07172B] mb-2">
-                  High-Yield Summaries
+                  हिंदी &amp; English Medium
                 </h3>
                 <p className="text-xs text-[#64748B] leading-relaxed">
-                  Focus on high-probability questions, algorithm steps, and core definitions rather than 1,000-page academic textbooks.
+                  Complete handwritten and typed notes in Hindi medium for BSEB &amp; BPSC, alongside English and Hinglish notes for CBSE and B.Tech.
                 </p>
               </div>
 
@@ -274,10 +402,10 @@ export default function HomePage() {
                   <ShieldCheck className="w-6 h-6" />
                 </div>
                 <h3 className="text-base font-bold text-[#07172B] mb-2">
-                  Secure Online Reader
+                  Affordable Micro-Pricing
                 </h3>
                 <p className="text-xs text-[#64748B] leading-relaxed">
-                  Read smoothly on desktop or mobile with our built-in canvas viewer featuring personalized security watermarks.
+                  Single notes priced at ₹19 to ₹49 with instant UPI payment (PhonePe, GPay, Paytm). No costly ₹10,000 subscriptions.
                 </p>
               </div>
 
@@ -286,10 +414,10 @@ export default function HomePage() {
                   <CheckCircle className="w-6 h-6" />
                 </div>
                 <h3 className="text-base font-bold text-[#07172B] mb-2">
-                  Fair Transparent Pricing
+                  Distraction-Free Notes
                 </h3>
                 <p className="text-xs text-[#64748B] leading-relaxed">
-                  Direct one-time pricing starting from ₹0 for foundational material, with zero recurring subscription locks.
+                  100% focused study notes. Strictly verified chapter guides, concept blueprints, formula sheets, and watermarked canvas reading.
                 </p>
               </div>
             </div>
@@ -305,10 +433,10 @@ export default function HomePage() {
                   Editorial Insights
                 </span>
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-[#07172B] tracking-tight">
-                  Latest Articles &amp; Exam Guides
+                  Latest Articles &amp; Exam Roadmaps
                 </h2>
                 <p className="mt-2 text-sm text-[#64748B] max-w-xl">
-                  Deep-dive explanations on database normalization, synchronization primitives, and exam roadmaps.
+                  Deep-dive explanations on exam blueprints, preparation roadmaps, and high-yield topics.
                 </p>
               </div>
               <Link
@@ -372,11 +500,11 @@ export default function HomePage() {
             </span>
 
             <h2 className="text-2xl sm:text-3xl font-extrabold text-[#07172B] tracking-tight">
-              Get Academic Notes Delivered to Your Inbox
+              Get Pan-India Academic Notes Delivered to Your Inbox
             </h2>
 
             <p className="mt-3 text-sm text-[#64748B] max-w-xl mx-auto mb-8">
-              Stay ahead with newly published chapter notes, formula cheat-sheets, and Bihar STET syllabus breakdowns. No spam, ever.
+              Stay ahead with newly published chapter notes for UPSC, BPSC, BSEB 12th, CBSE, and Engineering universities. No spam, ever.
             </p>
 
             <NewsletterForm />

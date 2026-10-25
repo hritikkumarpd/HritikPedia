@@ -2,13 +2,28 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { BookOpen, Eye, ArrowRight, Star, ShieldCheck, FileText } from 'lucide-react';
+import { BookOpen, Eye, ArrowRight, Star, ShieldCheck, FileText, Languages, Landmark } from 'lucide-react';
 import { formatINR } from '@hritikpedia/shared/payment';
 
 export default function NoteCard({ note }) {
   if (!note) return null;
 
   const isFree = note.isFree || Number(note.price) === 0;
+
+  // Medium Display
+  const mediumLabel =
+    note.medium === 'hindi'
+      ? 'हिंदी माध्यम'
+      : note.medium === 'bilingual'
+      ? 'Hinglish / द्विभाषी'
+      : 'English Medium';
+
+  const mediumColor =
+    note.medium === 'hindi'
+      ? 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+      : note.medium === 'bilingual'
+      ? 'bg-purple-500/10 text-purple-600 border-purple-500/20'
+      : 'bg-blue-500/10 text-blue-600 border-blue-500/20';
 
   return (
     <div className="group relative flex flex-col bg-white rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md hover:border-blue-300 transition-all duration-200 overflow-hidden">
@@ -18,9 +33,16 @@ export default function NoteCard({ note }) {
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#1688FF_1px,transparent_1px)] [background-size:16px_16px]"></div>
 
         <div className="relative z-10 flex items-center justify-between">
-          <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-white/10 text-white backdrop-blur-md border border-white/20">
-            {note.subjectName || 'Computer Science'}
-          </span>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-white/10 text-white backdrop-blur-md border border-white/20">
+              {note.targetExamOrBoard || note.target_exam_or_board || note.subjectName || 'Study Note'}
+            </span>
+            {note.classOrSemester && (
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-300 border border-blue-400/20">
+                {note.classOrSemester}
+              </span>
+            )}
+          </div>
 
           {isFree ? (
             <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-emerald-500 text-white shadow-xs">
@@ -28,7 +50,7 @@ export default function NoteCard({ note }) {
             </span>
           ) : (
             <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-[#FFB923] text-[#07172B] shadow-xs">
-              PREMIUM
+              ₹{note.price}
             </span>
           )}
         </div>
@@ -46,9 +68,22 @@ export default function NoteCard({ note }) {
       {/* Card Body */}
       <div className="flex-1 p-5 flex flex-col justify-between">
         <div>
-          <p className="text-xs text-[#64748B] line-clamp-2 leading-relaxed mb-4">
+          <p className="text-xs text-[#64748B] line-clamp-2 leading-relaxed mb-3">
             {note.description}
           </p>
+
+          {/* Medium and Department tag */}
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border flex items-center gap-1 ${mediumColor}`}>
+              <Languages className="w-3 h-3" />
+              <span>{mediumLabel}</span>
+            </span>
+            {note.department && (
+              <span className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
+                {note.department}
+              </span>
+            )}
+          </div>
 
           {/* Metadata chips */}
           <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-500 pb-3 border-b border-slate-100">
@@ -64,7 +99,7 @@ export default function NoteCard({ note }) {
             <span>•</span>
             <span className="flex items-center gap-1 font-medium text-slate-600">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              Watermarked
+              Verified
             </span>
           </div>
         </div>
@@ -87,7 +122,7 @@ export default function NoteCard({ note }) {
               </div>
             )}
             <span className="text-[10px] text-slate-400 font-medium">
-              {isFree ? 'Instant Access' : 'One-time Payment'}
+              {isFree ? '100% Free Access' : 'Lifetime Access'}
             </span>
           </div>
 
@@ -107,7 +142,7 @@ export default function NoteCard({ note }) {
               href={`/notes/${note.slug}`}
               className="px-3.5 py-1.5 text-xs font-bold text-white bg-[#087BFF] hover:bg-[#1688FF] rounded-lg transition-colors flex items-center gap-1 shadow-xs group-hover:gap-1.5"
             >
-              <span>Details</span>
+              <span>Get Note</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>

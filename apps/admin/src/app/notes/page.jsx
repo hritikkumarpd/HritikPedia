@@ -13,7 +13,12 @@ import {
   Loader2,
   ExternalLink,
   Sparkles,
-  X
+  X,
+  Landmark,
+  School,
+  Cpu,
+  GraduationCap,
+  Languages,
 } from 'lucide-react';
 import { formatINR } from '@hritikpedia/shared/payment';
 
@@ -34,10 +39,14 @@ export default function AdminNotesPage() {
     description: '',
     pageCount: 15,
     isFree: false,
-    price: 99,
+    price: 49,
     previewPages: 5,
     isFeatured: false,
     status: 'published',
+    domain: 'general_competitions',
+    targetExamOrBoard: 'UPSC',
+    medium: 'english',
+    department: 'Civil Services',
   });
 
   const fetchNotes = async () => {
@@ -86,10 +95,14 @@ export default function AdminNotesPage() {
         description: '',
         pageCount: 15,
         isFree: false,
-        price: 99,
+        price: 49,
         previewPages: 5,
         isFeatured: false,
         status: 'published',
+        domain: 'general_competitions',
+        targetExamOrBoard: 'UPSC',
+        medium: 'english',
+        department: 'Civil Services',
       });
       fetchNotes();
     } catch (err) {
@@ -103,8 +116,10 @@ export default function AdminNotesPage() {
     const q = search.toLowerCase();
     return (
       n.title.toLowerCase().includes(q) ||
-      n.subject_name.toLowerCase().includes(q) ||
-      n.slug.toLowerCase().includes(q)
+      (n.subject_name && n.subject_name.toLowerCase().includes(q)) ||
+      (n.slug && n.slug.toLowerCase().includes(q)) ||
+      (n.target_exam_or_board && n.target_exam_or_board.toLowerCase().includes(q)) ||
+      (n.domain && n.domain.toLowerCase().includes(q))
     );
   });
 
@@ -113,15 +128,15 @@ export default function AdminNotesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Educational Notes CMS</h1>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Pan-India Educational Notes CMS</h1>
           <p className="text-xs text-slate-400 mt-1">
-            Publish, curate, and configure educational notes and dynamic access policies
+            Publish, curate, and configure study notes for Govt. Exams (UPSC/BPSC), Boards (CBSE/BSEB), and Engineering (AKTU/BEU)
           </p>
         </div>
 
         <button
           onClick={() => setShowModal(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl shadow-lg shadow-blue-600/20 transition-all self-start sm:self-auto"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl shadow-lg shadow-blue-600/20 transition-all self-start sm:self-auto cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Publish New Note</span>
@@ -138,7 +153,7 @@ export default function AdminNotesPage() {
           }`}
         >
           <span>{message.text}</span>
-          <button onClick={() => setMessage(null)} className="text-slate-400 hover:text-white">
+          <button onClick={() => setMessage(null)} className="text-slate-400 hover:text-white cursor-pointer">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -152,7 +167,7 @@ export default function AdminNotesPage() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search notes by title, slug, or subject..."
+            placeholder="Search notes by title, exam (UPSC, BSEB, AKTU), slug, or subject..."
             className="w-full pl-9 pr-4 py-2 bg-slate-900 border border-slate-700/80 rounded-xl text-white text-xs focus:outline-none focus:border-blue-500"
           />
         </div>
@@ -168,10 +183,11 @@ export default function AdminNotesPage() {
             <thead className="bg-slate-900/80 text-[11px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-800">
               <tr>
                 <th className="px-5 py-3.5">Note Details</th>
+                <th className="px-5 py-3.5">Domain &amp; Exam</th>
                 <th className="px-5 py-3.5">Subject</th>
                 <th className="px-5 py-3.5">Pages &amp; Preview</th>
                 <th className="px-5 py-3.5">Pricing</th>
-                <th className="px-5 py-3.5">Security / Policies</th>
+                <th className="px-5 py-3.5">Security</th>
                 <th className="px-5 py-3.5">Status</th>
                 <th className="px-5 py-3.5 text-right">Actions</th>
               </tr>
@@ -179,23 +195,42 @@ export default function AdminNotesPage() {
             <tbody className="divide-y divide-slate-800/60">
               {loading ? (
                 <tr>
-                  <td colSpan="7" className="px-5 py-12 text-center text-slate-500">
+                  <td colSpan="8" className="px-5 py-12 text-center text-slate-500">
                     <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-blue-500" />
                     <span>Loading notes catalog...</span>
                   </td>
                 </tr>
               ) : filteredNotes.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-5 py-10 text-center text-slate-500">
+                  <td colSpan="8" className="px-5 py-10 text-center text-slate-500">
                     No notes match the specified query.
                   </td>
                 </tr>
               ) : (
                 filteredNotes.map((note) => (
                   <tr key={note.id} className="hover:bg-slate-800/30 transition-colors">
-                    <td className="px-5 py-4">
-                      <div className="font-semibold text-white">{note.title}</div>
+                    <td className="px-5 py-4 max-w-xs">
+                      <div className="font-semibold text-white line-clamp-1">{note.title}</div>
                       <div className="text-[11px] text-slate-400 font-mono mt-0.5">/{note.slug}</div>
+                      {note.medium && (
+                        <span className={`inline-block mt-1 text-[10px] font-bold px-1.5 py-0.2 rounded ${
+                          note.medium === 'hindi'
+                            ? 'bg-amber-500/20 text-amber-300'
+                            : 'bg-blue-500/20 text-blue-300'
+                        }`}>
+                          {note.medium === 'hindi' ? 'हिंदी माध्यम' : note.medium === 'english' ? 'English' : 'Bilingual'}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-5 py-4">
+                      {note.target_exam_or_board && (
+                        <div className="font-bold text-amber-400 flex items-center gap-1">
+                          🎯 {note.target_exam_or_board}
+                        </div>
+                      )}
+                      <div className="text-[10px] text-slate-400 capitalize">
+                        {note.domain?.replace('_', ' ') || 'General'}
+                      </div>
                     </td>
                     <td className="px-5 py-4">
                       <span className="px-2.5 py-1 rounded-md bg-slate-800 text-blue-300 text-[11px] font-medium border border-slate-700/80">
@@ -210,7 +245,7 @@ export default function AdminNotesPage() {
                     </td>
                     <td className="px-5 py-4">
                       {note.is_free ? (
-                        <span className="text-emerald-400 font-bold">FREE</span>
+                        <span className="text-emerald-400 font-bold">FREE (₹0)</span>
                       ) : (
                         <span className="text-amber-400 font-bold">{formatINR(note.price)}</span>
                       )}
@@ -260,15 +295,15 @@ export default function AdminNotesPage() {
       {/* Create Note Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-[#0B1D36] border border-slate-800 rounded-2xl w-full max-w-xl p-6 shadow-2xl relative">
+          <div className="bg-[#0B1D36] border border-slate-800 rounded-2xl w-full max-w-xl p-6 shadow-2xl relative my-8">
             <div className="flex items-center justify-between pb-4 border-b border-slate-800">
               <div className="flex items-center gap-2">
                 <FileText className="w-5 h-5 text-blue-400" />
-                <h3 className="text-base font-bold text-white">Publish New Note</h3>
+                <h3 className="text-base font-bold text-white">Publish New Pan-India Note</h3>
               </div>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800"
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -282,11 +317,68 @@ export default function AdminNotesPage() {
                   required
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="e.g. Database Indexing & B-Trees Complete Guide"
+                  placeholder="e.g. BPSC 70th Bihar Special History Notes (हिंदी माध्यम)"
                   className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs focus:outline-none focus:border-blue-500"
                 />
               </div>
 
+              {/* Domain & Target Exam */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">Educational Domain</label>
+                  <select
+                    value={formData.domain}
+                    onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs focus:outline-none focus:border-blue-500"
+                  >
+                    <option value="general_competitions">Govt. Exams (UPSC / BPSC / SSC)</option>
+                    <option value="school_boards">10th &amp; 12th Boards (CBSE / BSEB)</option>
+                    <option value="engineering">Engineering (AKTU / BEU / B.Tech)</option>
+                    <option value="general_degree">Degree (BCA / B.Sc / B.Com)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">Target Exam or Board</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.targetExamOrBoard}
+                    onChange={(e) => setFormData({ ...formData, targetExamOrBoard: e.target.value })}
+                    placeholder="e.g. UPSC, BPSC, BSEB 12th, CBSE 10th, AKTU"
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              {/* Medium & Department */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">Medium of Instruction</label>
+                  <select
+                    value={formData.medium}
+                    onChange={(e) => setFormData({ ...formData, medium: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs focus:outline-none focus:border-blue-500"
+                  >
+                    <option value="hindi">हिंदी माध्यम (Hindi Medium)</option>
+                    <option value="english">English Medium</option>
+                    <option value="bilingual">Bilingual / Hinglish</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">Department / Stream</label>
+                  <input
+                    type="text"
+                    value={formData.department}
+                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                    placeholder="e.g. Civil Services, Science (PCM), Computer Science"
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              {/* Subject & Slug */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-300 mb-1">Subject</label>
@@ -309,7 +401,7 @@ export default function AdminNotesPage() {
                     type="text"
                     value={formData.slug}
                     onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                    placeholder="dbms-indexing-btrees"
+                    placeholder="bpsc-bihar-special-history"
                     className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs focus:outline-none focus:border-blue-500"
                   />
                 </div>
@@ -322,7 +414,7 @@ export default function AdminNotesPage() {
                   required
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Comprehensive notes covering B-Trees, B+ Trees, clustered vs unclustered indices..."
+                  placeholder="High-yield chapter notes covering key syllabus points, diagrams, and formulas..."
                   className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs focus:outline-none focus:border-blue-500"
                 ></textarea>
               </div>
@@ -346,8 +438,8 @@ export default function AdminNotesPage() {
                     onChange={(e) => setFormData({ ...formData, isFree: e.target.value === 'free' })}
                     className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs focus:outline-none focus:border-blue-500"
                   >
-                    <option value="paid">Paid (₹)</option>
-                    <option value="free">100% Free</option>
+                    <option value="paid">Micro-Priced (₹)</option>
+                    <option value="free">100% Free (₹0)</option>
                   </select>
                 </div>
 
@@ -369,14 +461,14 @@ export default function AdminNotesPage() {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-xl"
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-xl cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="inline-flex items-center gap-2 px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl shadow-lg shadow-blue-600/20 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl shadow-lg shadow-blue-600/20 disabled:opacity-50 cursor-pointer"
                 >
                   {saving ? (
                     <>

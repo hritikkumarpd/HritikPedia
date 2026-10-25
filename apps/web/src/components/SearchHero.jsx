@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, BookOpen, Layers, FileText, ArrowRight, X, Loader2 } from 'lucide-react';
+import { Search, BookOpen, Layers, FileText, ArrowRight, X, Loader2, Landmark, School, Cpu, GraduationCap } from 'lucide-react';
 
 export default function SearchHero({ className = '' }) {
   const [query, setQuery] = useState('');
@@ -73,7 +73,7 @@ export default function SearchHero({ className = '' }) {
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           onFocus={() => query.trim().length >= 2 && setIsOpen(true)}
-          placeholder="Search by subject, topic (e.g. Normalization, Deadlocks, K-Maps, Subnetting)..."
+          placeholder="Search UPSC, BPSC, BSEB 10th/12th, CBSE, AKTU, BEU, DBMS..."
           className="w-full pl-12 pr-24 py-3.5 sm:py-4 text-sm sm:text-base bg-transparent text-[#26354B] placeholder-slate-400 focus:outline-hidden rounded-2xl"
           aria-label="Search study notes, subjects, and topics"
         />
@@ -95,7 +95,7 @@ export default function SearchHero({ className = '' }) {
           )}
           <button
             onClick={() => query.trim() && router.push(`/search?q=${encodeURIComponent(query.trim())}`)}
-            className="px-3.5 py-1.5 text-xs font-bold text-white bg-[#087BFF] hover:bg-[#1688FF] rounded-xl transition-colors shadow-xs"
+            className="px-3.5 py-1.5 text-xs font-bold text-white bg-[#087BFF] hover:bg-[#1688FF] rounded-xl transition-colors shadow-xs cursor-pointer"
           >
             Search
           </button>
@@ -107,7 +107,7 @@ export default function SearchHero({ className = '' }) {
         <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-50 max-h-[420px] overflow-y-auto">
           {totalResults === 0 ? (
             <div className="p-6 text-center text-sm text-slate-500">
-              No results found for &ldquo;<strong className="text-[#07172B]">{query}</strong>&rdquo;. Try searching for &ldquo;DBMS&rdquo;, &ldquo;OS&rdquo;, or &ldquo;STET&rdquo;.
+              No results found for &ldquo;<strong className="text-[#07172B]">{query}</strong>&rdquo;. Try searching for &ldquo;UPSC&rdquo;, &ldquo;BPSC&rdquo;, &ldquo;BSEB&rdquo;, &ldquo;CBSE&rdquo;, or &ldquo;AKTU&rdquo;.
             </div>
           ) : (
             <div className="p-3 space-y-3">
@@ -116,7 +116,7 @@ export default function SearchHero({ className = '' }) {
                 <div>
                   <div className="px-3 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Layers className="w-3.5 h-3.5 text-[#087BFF]" />
-                    Subjects
+                    Subjects ({results.subjects.length})
                   </div>
                   <div className="space-y-1 mt-1">
                     {results.subjects.map((sub) => (
@@ -128,7 +128,14 @@ export default function SearchHero({ className = '' }) {
                         }}
                         className="w-full text-left px-3 py-2 text-xs font-semibold text-[#07172B] hover:bg-blue-50 rounded-lg flex items-center justify-between transition-colors cursor-pointer"
                       >
-                        <span>{sub.name}</span>
+                        <div className="flex items-center gap-2">
+                          <span>{sub.name}</span>
+                          {sub.targetExamOrBoard && (
+                            <span className="text-[10px] bg-blue-100/70 text-blue-800 px-1.5 py-0.5 rounded font-bold">
+                              {sub.targetExamOrBoard}
+                            </span>
+                          )}
+                        </div>
                         <span className="text-[10px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
                           {sub.noteCount} Notes
                         </span>
@@ -143,7 +150,7 @@ export default function SearchHero({ className = '' }) {
                 <div>
                   <div className="px-3 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <BookOpen className="w-3.5 h-3.5 text-[#087BFF]" />
-                    Study Notes
+                    Study Notes ({results.notes.length})
                   </div>
                   <div className="space-y-1 mt-1">
                     {results.notes.map((note) => (
@@ -155,12 +162,28 @@ export default function SearchHero({ className = '' }) {
                         }}
                         className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 flex items-center justify-between transition-colors cursor-pointer"
                       >
-                        <div className="space-y-0.5">
+                        <div className="space-y-0.5 max-w-[75%]">
                           <p className="text-xs font-bold text-[#07172B] line-clamp-1">{note.title}</p>
-                          <p className="text-[10px] text-slate-500">{note.subjectName} • {note.topic}</p>
+                          <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
+                            {note.targetExamOrBoard && (
+                              <span className="font-bold text-blue-600 bg-blue-50 px-1 rounded">
+                                {note.targetExamOrBoard}
+                              </span>
+                            )}
+                            {note.medium === 'hindi' && (
+                              <span className="font-bold text-amber-700 bg-amber-50 px-1 rounded">
+                                हिंदी
+                              </span>
+                            )}
+                            <span className="truncate">{note.subjectName}</span>
+                          </div>
                         </div>
                         <span className="text-xs font-bold text-[#087BFF] shrink-0 ml-2">
-                          {note.isFree ? 'Free' : `₹${note.price}`}
+                          {note.isFree ? (
+                            <span className="text-emerald-600 font-black">Free</span>
+                          ) : (
+                            `₹${note.price}`
+                          )}
                         </span>
                       </button>
                     ))}
@@ -199,7 +222,7 @@ export default function SearchHero({ className = '' }) {
                     setIsOpen(false);
                     router.push(`/search?q=${encodeURIComponent(query.trim())}`);
                   }}
-                  className="text-xs font-bold text-[#087BFF] hover:underline inline-flex items-center gap-1"
+                  className="text-xs font-bold text-[#087BFF] hover:underline inline-flex items-center gap-1 cursor-pointer"
                 >
                   <span>View all {totalResults} results</span>
                   <ArrowRight className="w-3.5 h-3.5" />

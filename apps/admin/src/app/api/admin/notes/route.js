@@ -16,6 +16,7 @@ export async function GET(request) {
       SELECT n.id, n.title, n.slug, n.description, n.page_count, n.is_free, n.price, 
              n.original_price, n.has_preview, n.preview_pages, n.is_featured, n.status, 
              n.download_allowed, n.watermark_enabled, n.author, n.published_at, n.created_at,
+             n.domain, n.target_exam_or_board, n.medium, n.department,
              s.name as subject_name, s.slug as subject_slug
       FROM notes n
       JOIN subjects s ON n.subject_id = s.id
@@ -23,7 +24,7 @@ export async function GET(request) {
     `);
 
     const subjectsRes = await query(`
-      SELECT id, name, slug FROM subjects ORDER BY name ASC
+      SELECT id, name, slug, domain FROM subjects ORDER BY name ASC
     `);
 
     return NextResponse.json({ notes: res.rows, subjects: subjectsRes.rows });
@@ -53,6 +54,10 @@ export async function POST(request) {
       isFeatured = false,
       fileKey,
       status = 'published',
+      domain = 'general_competitions',
+      targetExamOrBoard = 'UPSC',
+      medium = 'english',
+      department = 'General Studies',
     } = body;
 
     if (!title || !description || !subjectId) {
@@ -67,8 +72,9 @@ export async function POST(request) {
     const result = await transaction(async (txQuery) => {
       const insert = await txQuery(
         `INSERT INTO notes (title, slug, subject_id, description, page_count, is_free, price, 
-                           has_preview, preview_pages, is_featured, file_key, status, author, published_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE, $8, $9, $10, $11, $12, NOW())
+                           has_preview, preview_pages, is_featured, file_key, status, author, 
+                           domain, target_exam_or_board, medium, department, published_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW())
          RETURNING *`,
         [
           title.trim(),
@@ -83,6 +89,10 @@ export async function POST(request) {
           fileKey || `notes/${cleanSlug}.pdf`,
           status,
           user.name || 'Hritik Kumar',
+          domain,
+          targetExamOrBoard,
+          medium,
+          department,
         ]
       );
 
@@ -90,7 +100,12 @@ export async function POST(request) {
       await txQuery(
         `INSERT INTO audit_logs (actor_id, actor_email, action, entity_type, entity_id, details, created_at)
          VALUES ($1, $2, 'note:created', 'note', $3, $4, NOW())`,
-        [user.userId, user.email, String(insert.rows[0].id), JSON.stringify({ title, slug: cleanSlug })]
+        [
+          user.userId,
+          user.email,
+          String(insert.rows[0].id),
+          JSON.stringify({ title, slug: cleanSlug, domain, targetExamOrBoard, medium }),
+        ]
       );
 
       return insert.rows[0];
@@ -98,7 +113,6 @@ export async function POST(request) {
 
     return NextResponse.json({ success: true, note: result });
   } catch (err) {
-    console.error('Note creation error:', err);
-    return NextResponse.json({ error: err.message || 'Failed to save note' }, { status: 500 });
+    return NextResponse.json({ error: err.message || 'Failed to create note' }, { status: 500 });
   }
 }
