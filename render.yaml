@@ -26,6 +26,8 @@ services:
         sync: false
       - key: RAZORPAY_WEBHOOK_SECRET
         sync: false
+      - key: CORS_ALLOWED_ORIGIN
+        sync: false
 
   # Staff Admin Console (Port 3001)
   - type: web
@@ -44,7 +46,11 @@ services:
         value: 3001
       - key: NEXT_PUBLIC_APP_URL
         sync: false
+      - key: NEXT_PUBLIC_ADMIN_URL
+        sync: false
       - key: DATABASE_URL
         sync: false
       - key: JWT_SECRET
+        sync: false
+      - key: CORS_ALLOWED_ORIGIN
         sync: false

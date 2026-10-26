@@ -1,0 +1,5 @@
+# ----------------------------------------------------------------------
+# Cloudflare Pages — Production Admin API Proxy Rules
+# Rewrites admin frontend API calls to Render Admin Backend
+# ----------------------------------------------------------------------
+/api/admin/*  https://hritikpedia-admin.onrender.com/api/admin/:splat  200

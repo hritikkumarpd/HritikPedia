@@ -1,0 +1,6 @@
+# ----------------------------------------------------------------------
+# Cloudflare Pages — Production API Proxy Rules
+# Transparently rewrites frontend API calls to Render Backend
+# Keeps cookies and tokens first-party with zero CORS overhead
+# ----------------------------------------------------------------------
+/api/*  https://hritikpedia-web.onrender.com/api/:splat  200
