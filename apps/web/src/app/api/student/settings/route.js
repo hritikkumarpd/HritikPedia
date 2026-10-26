@@ -30,6 +30,12 @@ export async function PUT(request) {
   try {
     const { name, currentPassword, newPassword } = await request.json();
 
+    if (name !== undefined) {
+      if (typeof name !== 'string' || name.trim().length < 2 || name.trim().length > 150) {
+        return NextResponse.json({ error: 'Please enter a valid full name (2-150 characters)' }, { status: 400 });
+      }
+    }
+
     if (name && name.trim().length >= 2) {
       await query('UPDATE users SET name = $1, updated_at = NOW() WHERE id = $2', [name.trim(), payload.userId]);
     }
@@ -40,6 +46,10 @@ export async function PUT(request) {
       }
 
       const userRes = await query('SELECT password_hash FROM users WHERE id = $1', [payload.userId]);
+      if (userRes.rows.length === 0) {
+        return NextResponse.json({ error: 'User account not found' }, { status: 404 });
+      }
+
       const validCurrent = await verifyPassword(currentPassword, userRes.rows[0].password_hash);
 
       if (!validCurrent) {

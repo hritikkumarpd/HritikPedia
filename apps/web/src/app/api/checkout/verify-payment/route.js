@@ -42,7 +42,7 @@ export async function POST(request) {
 
     // 2. Fetch order to verify ownership & note_id
     const orderRes = await query(
-      'SELECT id, user_id, note_id, amount, status FROM orders WHERE order_id = $1',
+      'SELECT id, user_id, note_id, amount, status, coupon_code FROM orders WHERE order_id = $1',
       [orderId]
     );
 
@@ -59,13 +59,24 @@ export async function POST(request) {
 
     // 3. Transactional Entitlement Grant & Order Update
     await transaction(async (txQuery) => {
-      // Update order status to paid
-      await txQuery(
+      // Update order status to paid. RETURNING tells us whether this call is the
+      // one that transitioned the order, so coupon usage is counted exactly once.
+      const updated = await txQuery(
         `UPDATE orders
          SET status = 'paid', payment_id = $1, payment_signature = $2, updated_at = NOW()
-         WHERE id = $3`,
+         WHERE id = $3 AND status <> 'paid'
+         RETURNING id`,
         [paymentId, signature, order.id]
       );
+
+      if (updated.rows.length > 0 && order.coupon_code) {
+        await txQuery(
+          `UPDATE coupons
+           SET current_uses = current_uses + 1
+           WHERE code = $1 AND current_uses < max_uses`,
+          [order.coupon_code]
+        );
+      }
 
       // Insert entitlement idempotently
       await txQuery(

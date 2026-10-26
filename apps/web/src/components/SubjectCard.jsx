@@ -2,94 +2,51 @@
 
 import React from 'react';
 import Link from 'next/link';
-import {
-  Database,
-  Cpu,
-  Network,
-  CircuitBoard,
-  Binary,
-  GraduationCap,
-  Code2,
-  Globe,
-  BookOpen,
-  ArrowRight,
-  Landmark,
-  School,
-  Atom,
-  Flame,
-  Calculator,
-  Compass,
-} from 'lucide-react';
+import { ArrowRight, BookOpen } from 'lucide-react';
 
-const ICON_MAP = {
-  Database,
-  Cpu,
-  Network,
-  CircuitBoard,
-  Binary,
-  GraduationCap,
-  Code2,
-  Globe,
-  Landmark,
-  School,
-  Atom,
-  Flame,
-  Calculator,
-  Compass,
+const DOMAIN_LABEL = {
+  engineering: 'Engineering CSE',
+  general_competitions: 'Government Exams',
+  school_boards: 'School Boards',
+  general_degree: 'Degree & University',
 };
 
 export default function SubjectCard({ subject }) {
   if (!subject) return null;
 
-  const IconComponent = ICON_MAP[subject.icon] || BookOpen;
+  const noteCount = Number(subject.noteCount) || 0;
 
   return (
     <Link
       href={`/subjects/${subject.slug}`}
-      className="group relative flex flex-col justify-between p-6 bg-white rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md hover:border-[#087BFF]/50 transition-all duration-200"
+      className="group flex flex-col rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-xs hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-md transition-all duration-150"
     >
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-105 duration-200"
-            style={{
-              backgroundColor: `${subject.color || '#087BFF'}15`,
-              color: subject.color || '#087BFF',
-            }}
-          >
-            <IconComponent className="w-6 h-6" />
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            {subject.targetExamOrBoard && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/60">
-                {subject.targetExamOrBoard}
-              </span>
-            )}
-            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 group-hover:bg-blue-50 group-hover:text-[#087BFF] transition-colors">
-              {subject.noteCount || 0} Notes
-            </span>
-          </div>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+            <BookOpen className="h-4 w-4" />
+          </span>
+          <h3 className="font-display text-sm font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+            {subject.name}
+          </h3>
         </div>
-
-        <h3 className="text-base font-bold text-[#07172B] group-hover:text-[#087BFF] transition-colors leading-snug">
-          {subject.name}
-        </h3>
-
-        {subject.department && (
-          <p className="mt-1 text-[11px] font-semibold text-slate-500">
-            {subject.department}
-          </p>
-        )}
-
-        <p className="mt-2 text-xs text-[#64748B] line-clamp-3 leading-relaxed">
-          {subject.description}
-        </p>
+        <span className="shrink-0 rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[10px] font-semibold text-slate-600 dark:text-slate-400">
+          {noteCount > 0 ? `${noteCount} ${noteCount === 1 ? 'pack' : 'packs'}` : 'Curating'}
+        </span>
       </div>
 
-      <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-[#087BFF]">
-        <span>Explore Subject Notes</span>
-        <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
+      <p className="mt-2.5 line-clamp-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+        {subject.description || `Comprehensive study notes, diagrams, and PYQ solutions for ${subject.name}.`}
+      </p>
+
+      <div className="mt-4 flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-2.5 text-[11px]">
+        <span className="truncate font-semibold uppercase tracking-wider text-[10px] text-slate-400">
+          {subject.targetExamOrBoard || DOMAIN_LABEL[subject.domain] || 'Computer Science'}
+        </span>
+        <span className="inline-flex items-center gap-1 font-semibold text-blue-600 dark:text-blue-400 group-hover:translate-x-0.5 transition-transform">
+          <span>Explore</span>
+          <ArrowRight className="h-3 w-3" />
+        </span>
       </div>
     </Link>
   );

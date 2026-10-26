@@ -1,13 +1,22 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ShieldCheck, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, RefreshCw, CheckCircle2, Loader2 } from 'lucide-react';
 
 /**
- * Universal CAPTCHA Widget for Admin Console
- * Integrates Cloudflare Turnstile with cryptographic math challenge fallback.
+ * Admin CAPTCHA Widget
+ *
+ * Challenges are issued and signed by /api/admin/auth/captcha and verified
+ * server-side. The old widget generated its answer in the browser, which the
+ * server could never validate — that made admin sign-in impossible without
+ * Cloudflare Turnstile.
  */
-export default function CaptchaWidget({ action = 'admin_login', onVerify, onExpire }) {
+export default function CaptchaWidget({
+  action = 'admin_login',
+  challengeEndpoint = '/api/admin/auth/captcha',
+  onVerify,
+  onExpire,
+}) {
   const [provider, setProvider] = useState('loading');
   const [siteKey, setSiteKey] = useState('');
   const [mathChallenge, setMathChallenge] = useState(null);
@@ -18,41 +27,47 @@ export default function CaptchaWidget({ action = 'admin_login', onVerify, onExpi
   const widgetIdRef = useRef(null);
 
   const fetchChallenge = async () => {
-    try {
-      setError('');
-      setVerified(false);
-      setUserAnswer('');
-      if (onExpire) onExpire();
+    setError('');
+    setVerified(false);
+    setUserAnswer('');
+    setMathChallenge(null);
+    setProvider('loading');
+    if (onExpire) onExpire();
 
-      // Check Turnstile public key first
-      const cfKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
-      if (cfKey) {
+    try {
+      const res = await fetch(
+        `${challengeEndpoint}?action=${encodeURIComponent(action)}`,
+        { cache: 'no-store' }
+      );
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Unable to load verification challenge.');
+      }
+
+      if (data.provider === 'cloudflare_turnstile' && data.siteKey) {
         setProvider('cloudflare_turnstile');
-        setSiteKey(cfKey);
+        setSiteKey(data.siteKey);
         return;
       }
 
+      if (!data.question || !data.challenge) {
+        throw new Error('Unable to load verification challenge.');
+      }
+
       setProvider('crypto_math');
-      const num1 = Math.floor(Math.random() * 8) + 2;
-      const num2 = Math.floor(Math.random() * 8) + 1;
-      setMathChallenge({
-        question: `Security Check: What is ${num1} + ${num2}?`,
-        ans: String(num1 + num2),
-        challenge: `${Date.now()}:admin_sig`,
-      });
+      setMathChallenge(data);
     } catch (err) {
+      console.warn('Admin captcha challenge fetch failed:', err);
       setProvider('crypto_math');
-      setMathChallenge({
-        question: 'Security Check: Type 8',
-        ans: '8',
-        challenge: `${Date.now()}:admin_sig`,
-      });
+      setMathChallenge(null);
+      setError('Could not load human verification. Please retry.');
     }
   };
 
   useEffect(() => {
     fetchChallenge();
-  }, [action]);
+  }, [action, challengeEndpoint]);
 
   // Handle Cloudflare Turnstile initialization
   useEffect(() => {
@@ -137,11 +152,16 @@ export default function CaptchaWidget({ action = 'admin_login', onVerify, onExpi
 
   const handleMathSubmit = (e) => {
     e.preventDefault();
-    if (userAnswer.trim() !== mathChallenge?.ans && userAnswer.trim() !== '8') {
-      setError('Incorrect verification answer. Try again.');
+    if (!mathChallenge?.challenge) {
+      setError('Verification challenge is not ready. Please retry.');
+      return;
+    }
+    if (!userAnswer.trim()) {
+      setError('Please answer the question to proceed.');
       return;
     }
 
+    // answer:timestamp:signature — verified server-side
     const token = `${userAnswer.trim()}:${mathChallenge.challenge}`;
     setVerified(true);
     setError('');
@@ -162,27 +182,32 @@ export default function CaptchaWidget({ action = 'admin_login', onVerify, onExpi
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <ShieldCheck className="w-4 h-4 text-emerald-400" />
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Admin Human Check</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Admin Human Verification</span>
         </div>
         <button
           type="button"
           onClick={fetchChallenge}
           title="New challenge"
-          className="text-slate-400 hover:text-white transition-colors p-1"
+          className="text-slate-400 hover:text-white transition-colors p-1 cursor-pointer"
         >
           <RefreshCw className="w-3.5 h-3.5" />
         </button>
       </div>
 
-      {verified ? (
+      {provider === 'loading' ? (
+        <div className="flex items-center gap-2 py-1.5 text-xs text-slate-400">
+          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          <span>Loading verification challenge...</span>
+        </div>
+      ) : verified ? (
         <div className="flex items-center gap-2 py-1.5 px-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-medium">
           <CheckCircle2 className="w-4 h-4" />
-          <span>Admin verification passed</span>
+          <span>Admin verification complete</span>
         </div>
-      ) : (
+      ) : mathChallenge ? (
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-slate-200 whitespace-nowrap">
-            {mathChallenge?.question || 'What is 5 + 3?'}
+            {mathChallenge.question}
           </span>
           <input
             type="number"
@@ -205,6 +230,14 @@ export default function CaptchaWidget({ action = 'admin_login', onVerify, onExpi
             Verify
           </button>
         </div>
+      ) : (
+        <button
+          type="button"
+          onClick={fetchChallenge}
+          className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 underline underline-offset-2 cursor-pointer"
+        >
+          Retry verification
+        </button>
       )}
 
       {error && <p className="text-xs text-rose-400 mt-2 font-medium">{error}</p>}

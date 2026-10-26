@@ -1,186 +1,259 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { BookOpen, Sparkles, Clock, ArrowRight, ShieldCheck, CheckCircle2 } from 'lucide-react';
-import { INITIAL_NOTES } from '@hritikpedia/shared/data';
+import BookCover3D from '../../components/Book3D';
+import {
+  BookOpen,
+  FileText,
+  Loader2,
+  AlertCircle,
+  Sparkles,
+  ArrowRight,
+  ShoppingBag,
+  Clock3,
+  Library,
+  ShieldCheck,
+} from 'lucide-react';
 
-export default function DashboardOverviewPage() {
+export default function MyLibraryPage() {
+  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'purchased' | 'free'
   const [purchasedNotes, setPurchasedNotes] = useState([]);
+  const [freeNotes, setFreeNotes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    async function loadNotes() {
+    let cancelled = false;
+
+    async function loadLibrary() {
       try {
-        const res = await fetch('/api/student/notes');
+        const res = await fetch('/api/student/notes', { cache: 'no-store' });
+        const data = await res.json();
+        if (cancelled) return;
+
         if (res.ok) {
-          const data = await res.json();
           setPurchasedNotes(data.purchasedNotes || []);
+          setFreeNotes(data.freeNotes || []);
+        } else {
+          setError(data.error || 'Unable to load your library right now.');
         }
-      } catch (err) {
-        console.error('Error loading notes:', err);
+      } catch {
+        if (!cancelled) setError('Unable to load your library right now.');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
-    loadNotes();
+
+    loadLibrary();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const freeNotes = INITIAL_NOTES.filter((n) => n.isFree);
+  const items = useMemo(() => {
+    const purchased = purchasedNotes.map((note) => ({
+      id: `purchased-${note.id}`,
+      noteId: note.id,
+      title: note.title,
+      slug: note.slug,
+      category: note.subject_name || 'Study Notes',
+      pageCount: note.page_count,
+      access: 'purchased',
+    }));
+
+    const free = freeNotes.map((note) => ({
+      id: `free-${note.id}`,
+      noteId: note.id,
+      title: note.title,
+      slug: note.slug,
+      category: note.subjectName || 'Free Study Notes',
+      pageCount: note.pageCount,
+      access: 'free',
+    }));
+
+    return [...purchased, ...free];
+  }, [purchasedNotes, freeNotes]);
+
+  const tabs = [
+    { id: 'all', label: 'All Library Items', count: items.length },
+    { id: 'purchased', label: 'Purchased Editions', count: purchasedNotes.length },
+    { id: 'free', label: 'Free Shelf', count: freeNotes.length },
+  ];
+
+  const filteredItems = items.filter((item) => {
+    if (activeTab === 'all') return true;
+    return item.access === activeTab;
+  });
 
   return (
     <div className="space-y-8">
-      {/* Welcome Banner */}
-      <div className="bg-gradient-to-r from-[#07172B] via-[#0B1D36] to-[#0A2548] rounded-3xl p-6 sm:p-8 text-white shadow-xs">
-        <div className="max-w-2xl space-y-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-white/10 text-blue-200 text-xs font-bold border border-white/10">
-            <Sparkles className="w-3.5 h-3.5 text-[#FFB923]" />
-            <span>Academic Portal</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
-            Stop Searching. Start Learning.
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-            Welcome to your student learning hub. Access your purchased study notes, continue reading where you left off, and explore our free revision blueprints.
-          </p>
-        </div>
-      </div>
-
-      {/* Metrics Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-xs">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Purchased Notes
-            </span>
-            <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#087BFF] flex items-center justify-center">
-              <BookOpen className="w-4 h-4" />
-            </div>
-          </div>
-          <p className="text-2xl font-black text-[#07172B]">{purchasedNotes.length}</p>
-          <span className="text-[11px] text-slate-400">Lifetime access unlocked</span>
-        </div>
-
-        <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-xs">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Free Resources
-            </span>
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <Sparkles className="w-4 h-4" />
-            </div>
-          </div>
-          <p className="text-2xl font-black text-[#07172B]">{freeNotes.length}</p>
-          <span className="text-[11px] text-emerald-600 font-semibold">Available for instant reading</span>
-        </div>
-
-        <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-xs">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Reading Status
-            </span>
-            <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
-              <ShieldCheck className="w-4 h-4" />
-            </div>
-          </div>
-          <p className="text-2xl font-black text-emerald-600">Active</p>
-          <span className="text-[11px] text-slate-400">Dynamic watermark enabled</span>
-        </div>
-      </div>
-
-      {/* Continue Reading / My Notes */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-[#07172B]">
-            Your Study Materials
-          </h2>
-          <Link
-            href="/dashboard/my-notes"
-            className="text-xs font-bold text-[#087BFF] hover:underline flex items-center gap-1"
-          >
-            <span>View All</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-
-        {purchasedNotes.length === 0 ? (
-          <div className="p-8 bg-white rounded-2xl border border-dashed border-slate-300 text-center space-y-3">
-            <BookOpen className="w-10 h-10 text-slate-300 mx-auto" />
-            <h3 className="text-sm font-bold text-[#07172B]">No paid notes unlocked yet</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
-              You haven&apos;t purchased any premium notes yet. You can start reading our free blueprints or browse the catalog.
+      {/* Dashboard Top Banner */}
+      <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-sm">
+        <div className="relative flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
+          <div>
+            <span className="badge badge-primary">Personal Library</span>
+            <h1 className="mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+              My Reading Room
+            </h1>
+            <p className="mt-2 max-w-md text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+              Access your full licensed packs, preview sample notes, and continue revision across any device.
             </p>
-            <div className="flex justify-center gap-3 pt-2">
-              <Link
-                href="/notes"
-                className="px-4 py-2 text-xs font-bold text-white bg-[#087BFF] hover:bg-[#1688FF] rounded-lg transition-colors"
-              >
-                Explore Notes Catalog
-              </Link>
+          </div>
+
+          <div className="flex gap-3">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 px-4 py-3 text-center min-w-[5.5rem]">
+              <p className="text-xl font-bold text-slate-900 dark:text-white">
+                {purchasedNotes.length}
+              </p>
+              <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                Purchased
+              </p>
+            </div>
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 px-4 py-3 text-center min-w-[5.5rem]">
+              <p className="text-xl font-bold text-slate-900 dark:text-white">
+                {freeNotes.length}
+              </p>
+              <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                Free Packs
+              </p>
             </div>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {purchasedNotes.map((note) => (
-              <div
-                key={note.id}
-                className="p-5 bg-white rounded-2xl border border-slate-200/90 shadow-xs flex items-center justify-between gap-4"
+        </div>
+      </div>
+
+      {/* Tabs & Catalog Link */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                  isActive
+                    ? 'bg-primary text-white shadow-sm'
+                    : 'bg-white dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:border-primary hover:text-primary'
+                }`}
               >
-                <div>
-                  <span className="text-[10px] font-bold text-[#087BFF] uppercase">
-                    {note.subject_name}
-                  </span>
-                  <h3 className="text-sm font-bold text-[#07172B] line-clamp-1 mt-0.5">
-                    {note.title}
-                  </h3>
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    {note.page_count} Pages • Unlocked on {note.granted_at ? new Date(note.granted_at).toLocaleDateString() : 'Today'}
-                  </p>
-                </div>
-                <Link
-                  href={`/reader/${note.slug}`}
-                  className="shrink-0 px-4 py-2 text-xs font-bold text-white bg-[#087BFF] hover:bg-[#1688FF] rounded-xl transition-colors shadow-xs"
+                <span>{tab.label}</span>
+                <span
+                  className={`rounded-full px-1.5 py-0.2 text-[10px] font-bold ${
+                    isActive ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500'
+                  }`}
                 >
-                  Read Now
+                  {tab.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        <Link
+          href="/notes"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline self-start sm:self-auto"
+        >
+          <ShoppingBag className="h-3.5 w-3.5" />
+          <span>Explore More Notes</span>
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+
+      {loading ? (
+        <div className="card flex items-center justify-center gap-3 p-12 text-xs font-bold text-slate-500 border border-slate-200 dark:border-slate-800">
+          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+          <span>Opening personal study shelves...</span>
+        </div>
+      ) : error ? (
+        <div className="flex items-center gap-3 rounded-2xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/40 p-4 text-xs font-semibold text-red-600 dark:text-red-400">
+          <AlertCircle className="h-5 w-5 shrink-0" />
+          <span>{error}</span>
+        </div>
+      ) : filteredItems.length === 0 ? (
+        <div className="card p-12 text-center border border-slate-200 dark:border-slate-800">
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400">
+            <Library className="h-7 w-7" />
+          </span>
+          <p className="mt-4 text-lg font-bold text-slate-900 dark:text-white">
+            {activeTab === 'purchased' ? 'No Purchased Handbooks Yet' : 'Your Library Shelf is Empty'}
+          </p>
+          <p className="mx-auto mt-1 max-w-sm text-xs text-slate-500 leading-relaxed">
+            Discover verified study guides, formula revision sheets, and free chapter summaries.
+          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-2.5">
+            <Link href="/notes" className="btn btn-primary btn-sm">
+              <Sparkles className="h-3.5 w-3.5" />
+              Browse Study Notes
+            </Link>
+            <Link href="/free-resources" className="btn btn-secondary btn-sm">
+              Explore Free Shelf
+            </Link>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filteredItems.map((item) => (
+            <article
+              key={item.id}
+              className="card card-hover flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm"
+            >
+              <div className="flex min-w-0 flex-1 items-start gap-4">
+                <Link href={`/reader/${item.slug}`} className="shrink-0">
+                  <BookCover3D
+                    title={item.title}
+                    subject={item.category}
+                    color={item.access === 'free' ? 'purple' : 'blue'}
+                    size="sm"
+                    className="w-16 transition-transform hover:scale-105"
+                  />
+                </Link>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className={`badge ${
+                        item.access === 'free' ? 'badge-secondary' : 'badge-primary'
+                      }`}
+                    >
+                      {item.access === 'free' ? 'Free Edition' : 'Full License'}
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-400">
+                      <Clock3 className="h-3 w-3" />
+                      Lifetime Reader Access
+                    </span>
+                  </div>
+
+                  <Link href={`/reader/${item.slug}`}>
+                    <h3 className="mt-2 text-base sm:text-lg font-bold tracking-tight text-slate-900 dark:text-white hover:text-primary transition-colors">
+                      {item.title}
+                    </h3>
+                  </Link>
+
+                  <p className="mt-1 text-xs font-semibold text-slate-500">{item.category}</p>
+
+                  <div className="mt-3 flex items-center gap-2 text-xs text-slate-400">
+                    <FileText className="h-3.5 w-3.5" />
+                    <span>{item.pageCount || 1} Total Pages</span>
+                    <span>•</span>
+                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Watermarked Reader</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex shrink-0 items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800 pt-3 sm:border-l sm:border-t-0 sm:pl-6 sm:pt-0">
+                <Link href={`/reader/${item.slug}`} className="btn btn-primary btn-sm w-full sm:w-auto justify-center">
+                  <BookOpen className="h-3.5 w-3.5" />
+                  {item.access === 'free' ? 'Open Free Reader' : 'Open Secured Reader'}
+                  <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Free Materials Ready for Study */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-bold text-[#07172B]">
-          Instant Free Revision Materials
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {freeNotes.map((note) => (
-            <div
-              key={note.id}
-              className="p-5 bg-white rounded-2xl border border-slate-200/90 shadow-xs flex items-center justify-between gap-4"
-            >
-              <div>
-                <span className="text-[10px] font-bold text-emerald-600 uppercase">
-                  100% Free
-                </span>
-                <h3 className="text-sm font-bold text-[#07172B] line-clamp-1 mt-0.5">
-                  {note.title}
-                </h3>
-                <p className="text-[11px] text-slate-400 mt-1">
-                  {note.pageCount} Pages • {note.subjectName}
-                </p>
-              </div>
-              <Link
-                href={`/reader/${note.slug}`}
-                className="shrink-0 px-4 py-2 text-xs font-bold text-[#07172B] bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-xl transition-colors border border-emerald-200"
-              >
-                Open Reader
-              </Link>
-            </div>
+            </article>
           ))}
         </div>
-      </div>
+      )}
     </div>
   );
 }

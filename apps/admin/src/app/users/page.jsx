@@ -103,10 +103,10 @@ export default function AdminUsersPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">
+          <h1 className="text-2xl font-bold text-ink tracking-tight">
             User Directory &amp; RBAC Control
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-muted mt-1">
             Manage student accounts, staff privileges, and granular role assignments
           </p>
         </div>
@@ -116,39 +116,39 @@ export default function AdminUsersPage() {
         <div
           className={`p-4 rounded-xl text-xs font-medium flex items-center justify-between ${
             message.type === 'error'
-              ? 'bg-red-950/60 border border-red-500/40 text-red-200'
-              : 'bg-emerald-950/60 border border-emerald-500/40 text-emerald-200'
+              ? 'bg-brick-soft border border-brick/30 text-brick'
+              : 'bg-mint-soft border border-mint/30 text-mint'
           }`}
         >
           <span>{message.text}</span>
-          <button onClick={() => setMessage(null)} className="text-slate-400 hover:text-white">
+          <button onClick={() => setMessage(null)} className="text-muted hover:text-ink">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
 
       {/* Search Bar */}
-      <div className="flex items-center justify-between gap-4 bg-[#0B1D36] p-3 rounded-2xl border border-slate-800">
+      <div className="flex items-center justify-between gap-4 bg-cream p-3 rounded-2xl border border-line">
         <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search users by name, email, or role..."
-            className="w-full pl-9 pr-4 py-2 bg-slate-900 border border-slate-700/80 rounded-xl text-white text-xs focus:outline-none focus:border-blue-500"
+            className="w-full pl-9 pr-4 py-2 bg-paper-2 border border-line-strong rounded-xl text-ink text-xs focus:outline-none focus:border-royal"
           />
         </div>
-        <div className="text-xs text-slate-400 font-medium pr-2">
+        <div className="text-xs text-muted font-medium pr-2">
           {filteredUsers.length} accounts found
         </div>
       </div>
 
       {/* Table */}
-      <div className="bg-[#0B1D36] rounded-2xl border border-slate-800 shadow-xl overflow-hidden">
+      <div className="bg-cream rounded-2xl border border-line shadow-xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-900/80 text-[11px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-800">
+          <table className="w-full text-left text-xs text-ink-soft">
+            <thead className="bg-paper-2 text-[11px] font-semibold text-muted uppercase tracking-wider border-b border-line">
               <tr>
                 <th className="px-5 py-3.5">Learner / Staff</th>
                 <th className="px-5 py-3.5">Assigned RBAC Role</th>
@@ -158,33 +158,33 @@ export default function AdminUsersPage() {
                 <th className="px-5 py-3.5 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody className="divide-y divide-line">
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="px-5 py-12 text-center text-slate-500">
-                    <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-blue-500" />
+                  <td colSpan="6" className="px-5 py-12 text-center text-muted">
+                    <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-royal" />
                     <span>Loading directory records...</span>
                   </td>
                 </tr>
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="px-5 py-10 text-center text-slate-500">
+                  <td colSpan="6" className="px-5 py-10 text-center text-muted">
                     No accounts match the search criteria.
                   </td>
                 </tr>
               ) : (
                 filteredUsers.map((u) => (
-                  <tr key={u.id} className="hover:bg-slate-800/30 transition-colors">
+                  <tr key={u.id} className="hover:bg-paper-2/30 transition-colors">
                     <td className="px-5 py-4">
-                      <div className="font-semibold text-white">{u.name || 'Anonymous Student'}</div>
-                      <div className="text-[11px] text-slate-400 font-mono mt-0.5">{u.email}</div>
+                      <div className="font-semibold text-ink">{u.name || 'Anonymous Student'}</div>
+                      <div className="text-[11px] text-muted font-mono mt-0.5">{u.email}</div>
                     </td>
                     <td className="px-5 py-4">
                       <select
                         value={u.role}
                         disabled={updatingId === u.id}
                         onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                        className="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
+                        className="bg-paper-2 border border-line-strong rounded-lg px-2.5 py-1 text-xs text-ink-soft focus:outline-none focus:border-royal"
                       >
                         {Object.values(ROLES).map((role) => (
                           <option key={role} value={role}>
@@ -197,8 +197,8 @@ export default function AdminUsersPage() {
                       <span
                         className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
                           u.is_active
-                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                            : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                            ? 'bg-mint-soft text-mint border border-mint/25'
+                            : 'bg-brick-soft text-brick border border-brick/25'
                         }`}
                       >
                         {u.is_active ? 'Active' : 'Deactivated'}
@@ -206,18 +206,18 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="px-5 py-4">
                       {u.email_verified ? (
-                        <span className="text-emerald-400 flex items-center gap-1 text-[11px]">
+                        <span className="text-mint flex items-center gap-1 text-[11px]">
                           <CheckCircle className="w-3.5 h-3.5" />
                           <span>Verified</span>
                         </span>
                       ) : (
-                        <span className="text-slate-500 flex items-center gap-1 text-[11px]">
+                        <span className="text-muted flex items-center gap-1 text-[11px]">
                           <XCircle className="w-3.5 h-3.5" />
                           <span>Unverified</span>
                         </span>
                       )}
                     </td>
-                    <td className="px-5 py-4 text-slate-400 text-[11px]">
+                    <td className="px-5 py-4 text-muted text-[11px]">
                       {new Date(u.created_at).toLocaleDateString()}
                     </td>
                     <td className="px-5 py-4 text-right">
@@ -226,8 +226,8 @@ export default function AdminUsersPage() {
                         disabled={updatingId === u.id}
                         className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
                           u.is_active
-                            ? 'bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20'
-                            : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20'
+                            ? 'bg-brick-soft hover:bg-brick-soft text-brick border border-brick/25'
+                            : 'bg-mint-soft hover:bg-mint-soft text-mint border border-mint/25'
                         }`}
                       >
                         {u.is_active ? (

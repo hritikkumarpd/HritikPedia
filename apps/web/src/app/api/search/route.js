@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { INITIAL_NOTES, INITIAL_SUBJECTS, INITIAL_ARTICLES } from '@hritikpedia/shared/data';
+import { getCatalogNotes, getCatalogSubjects, getCatalogArticles } from '../../../lib/catalog';
 import { checkRateLimit } from '@hritikpedia/shared/audit';
 
 export async function GET(request) {
@@ -24,8 +24,14 @@ export async function GET(request) {
     return NextResponse.json({ notes: [], subjects: [], articles: [] });
   }
 
+  const [allNotes, allSubjects, allArticles] = await Promise.all([
+    getCatalogNotes(),
+    getCatalogSubjects(),
+    getCatalogArticles(),
+  ]);
+
   // Filter notes across title, description, subjectName, topic, targetExamOrBoard, department, medium
-  const matchedNotes = INITIAL_NOTES.filter((n) => {
+  const matchedNotes = allNotes.filter((n) => {
     if (domainFilter && n.domain !== domainFilter) return false;
     if (mediumFilter && n.medium !== mediumFilter) return false;
     if (targetFilter && n.targetExamOrBoard?.toLowerCase() !== targetFilter.toLowerCase()) return false;
@@ -33,9 +39,9 @@ export async function GET(request) {
     if (!q) return true;
 
     return (
-      n.title.toLowerCase().includes(q) ||
-      n.description.toLowerCase().includes(q) ||
-      n.subjectName.toLowerCase().includes(q) ||
+      (n.title || '').toLowerCase().includes(q) ||
+      (n.description || '').toLowerCase().includes(q) ||
+      (n.subjectName || '').toLowerCase().includes(q) ||
       (n.topic && n.topic.toLowerCase().includes(q)) ||
       (n.targetExamOrBoard && n.targetExamOrBoard.toLowerCase().includes(q)) ||
       (n.department && n.department.toLowerCase().includes(q)) ||
@@ -45,16 +51,16 @@ export async function GET(request) {
   }).slice(0, 10);
 
   // Filter subjects
-  const matchedSubjects = INITIAL_SUBJECTS.filter((s) => {
+  const matchedSubjects = allSubjects.filter((s) => {
     if (domainFilter && s.domain !== domainFilter) return false;
     if (targetFilter && s.targetExamOrBoard?.toLowerCase() !== targetFilter.toLowerCase()) return false;
 
     if (!q) return true;
 
     return (
-      s.name.toLowerCase().includes(q) ||
-      s.description.toLowerCase().includes(q) ||
-      s.code.toLowerCase().includes(q) ||
+      (s.name || '').toLowerCase().includes(q) ||
+      (s.description || '').toLowerCase().includes(q) ||
+      (s.code || '').toLowerCase().includes(q) ||
       (s.targetExamOrBoard && s.targetExamOrBoard.toLowerCase().includes(q)) ||
       (s.department && s.department.toLowerCase().includes(q))
     );
@@ -63,11 +69,11 @@ export async function GET(request) {
   // Filter articles
   const matchedArticles = !q
     ? []
-    : INITIAL_ARTICLES.filter(
+    : allArticles.filter(
         (a) =>
-          a.title.toLowerCase().includes(q) ||
-          a.excerpt.toLowerCase().includes(q) ||
-          a.category.toLowerCase().includes(q)
+          (a.title || '').toLowerCase().includes(q) ||
+          (a.excerpt || '').toLowerCase().includes(q) ||
+          (a.category || '').toLowerCase().includes(q)
       ).slice(0, 4);
 
   return NextResponse.json({

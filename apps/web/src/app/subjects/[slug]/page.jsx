@@ -4,153 +4,289 @@ import { notFound } from 'next/navigation';
 import Header from '../../../components/Header';
 import Footer from '../../../components/Footer';
 import NoteCard from '../../../components/NoteCard';
+import PageHero from '../../../components/PageHero';
+import SectionHeading from '../../../components/SectionHeading';
 import AdSlot from '../../../components/AdSlot';
-import { INITIAL_SUBJECTS, INITIAL_NOTES } from '@hritikpedia/shared/data';
 import {
-  Layers,
-  BookOpen,
-  ArrowLeft,
-  Sparkles,
-  CheckCircle,
-  FileText,
-} from 'lucide-react';
+  getCatalogNotes,
+  getCatalogSubjectBySlug,
+  getCatalogSubjects,
+} from '../../../lib/catalog';
+import { ArrowRight, BookOpen, Layers } from 'lucide-react';
+
+const DOMAIN_LABELS = {
+  engineering: 'Engineering & CSE',
+  general_competitions: 'Government Exams',
+  school_boards: 'School Boards',
+  general_degree: 'Degree & University',
+};
 
 export async function generateMetadata({ params }) {
   const resolvedParams = await params;
-  const subject = INITIAL_SUBJECTS.find((s) => s.slug === resolvedParams.slug);
+  const subject = await getCatalogSubjectBySlug(resolvedParams.slug);
   if (!subject) return { title: 'Subject Not Found' };
 
+  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://hritikpedia.vercel.app').replace(/\/$/, '');
+  const subjectUrl = `${baseUrl}/subjects/${subject.slug}`;
+  const title = `${subject.name} Notes & Syllabus Guide | Hritikpedia`;
+  const description = `Read verified study notes, chapter summaries, and solved previous-year questions for ${subject.name} on Hritikpedia.`;
+
   return {
-    title: `${subject.name} Notes & Syllabus Guide`,
-    description: `Download and read verified study notes, chapter summaries, and theoretical solutions for ${subject.name} on Hritikpedia.`,
+    title,
+    description,
+    alternates: {
+      canonical: `/subjects/${subject.slug}`,
+    },
+    openGraph: {
+      title,
+      description,
+      url: subjectUrl,
+      type: 'website',
+      images: [
+        {
+          url: '/logo.png',
+          width: 1200,
+          height: 630,
+          alt: `${subject.name} — Hritikpedia Subject Notes`,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ['/logo.png'],
+    },
   };
 }
 
 export default async function SubjectDetailPage({ params }) {
   const resolvedParams = await params;
-  const subject = INITIAL_SUBJECTS.find((s) => s.slug === resolvedParams.slug);
+  const [subject, allNotes, allSubjects] = await Promise.all([
+    getCatalogSubjectBySlug(resolvedParams.slug),
+    getCatalogNotes(),
+    getCatalogSubjects(),
+  ]);
 
   if (!subject) {
     notFound();
   }
 
-  // Get notes for this subject
-  const subjectNotes = INITIAL_NOTES.filter(
+  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://hritikpedia.vercel.app').replace(/\/$/, '');
+  const subjectUrl = `${baseUrl}/subjects/${subject.slug}`;
+
+  const subjectNotes = allNotes.filter(
     (n) => n.subjectSlug === subject.slug || n.subjectId === subject.id
   );
 
-  const relatedSubjects = INITIAL_SUBJECTS.filter((s) => s.id !== subject.id).slice(0, 4);
+  const freeCount = subjectNotes.filter(
+    (n) => n.isFree || Number(n.price) === 0
+  ).length;
+
+  const relatedSubjects = allSubjects
+    .filter((s) => s.id !== subject.id && s.domain === subject.domain)
+    .slice(0, 4);
+  const fallbackRelated = allSubjects.filter((s) => s.id !== subject.id).slice(0, 4);
+  const related = relatedSubjects.length > 0 ? relatedSubjects : fallbackRelated;
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Course',
+        '@id': `${subjectUrl}/#course`,
+        name: subject.name,
+        description:
+          subject.description ||
+          `Comprehensive study notes, diagrams, and past year questions for ${subject.name}.`,
+        provider: {
+          '@type': 'Organization',
+          name: 'Hritikpedia',
+          url: baseUrl,
+        },
+        hasCourseInstance: {
+          '@type': 'CourseInstance',
+          courseMode: 'online',
+          courseWorkload: `${subjectNotes.length} curated study modules`,
+        },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        '@id': `${subjectUrl}/#breadcrumb`,
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Home',
+            item: baseUrl,
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'Subjects',
+            item: `${baseUrl}/subjects`,
+          },
+          {
+            '@type': 'ListItem',
+            position: 3,
+            name: subject.name,
+            item: subjectUrl,
+          },
+        ],
+      },
+    ],
+  };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F5F8FC]">
+    <div className="flex min-h-screen flex-col bg-slate-50 dark:bg-[#090d16] text-slate-900 dark:text-slate-100 transition-colors">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Header />
 
-      <main className="flex-1 py-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Breadcrumbs */}
-          <nav className="flex items-center gap-2 text-xs text-slate-500 mb-6" aria-label="Breadcrumb">
-            <Link href="/" className="hover:text-[#087BFF]">Home</Link>
-            <span>/</span>
-            <Link href="/subjects" className="hover:text-[#087BFF]">Subjects</Link>
-            <span>/</span>
-            <span className="text-[#07172B] font-semibold">{subject.name}</span>
-          </nav>
-
-          {/* Subject Hero Header */}
-          <div className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200/80 shadow-xs mb-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-[#087BFF] border border-blue-200">
-                    {subject.code}
-                  </span>
-                  <span className="text-xs text-slate-500 font-medium">
-                    {subjectNotes.length} Published Notes Available
-                  </span>
+      <main id="main-content" className="flex-1">
+        <PageHero
+          eyebrow={DOMAIN_LABELS[subject.domain] || 'Computer Science Subject'}
+          title={subject.name}
+          description={
+            subject.description ||
+            `Curated chapter notes, circuit diagrams, and solved previous year questions for ${subject.name}.`
+          }
+          breadcrumbs={[
+            { label: 'Subjects', href: '/subjects' },
+            { label: subject.name },
+          ]}
+          aside={
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Subject Dossier
+                </span>
+                <span className="badge badge-royal">Active Curriculum</span>
+              </div>
+              <dl className="divide-y divide-slate-100 dark:divide-slate-800 text-xs py-1">
+                <div className="flex items-center justify-between py-2.5">
+                  <dt className="text-slate-600 dark:text-slate-400">Available study packs</dt>
+                  <dd className="font-display text-base font-extrabold text-slate-900 dark:text-white">
+                    {subjectNotes.length}
+                  </dd>
                 </div>
-
-                <h1 className="text-2xl sm:text-4xl font-black text-[#07172B] tracking-tight">
-                  {subject.name}
-                </h1>
-
-                <p className="text-sm text-[#64748B] max-w-3xl leading-relaxed">
-                  {subject.description}
-                </p>
-              </div>
-
-              <div className="shrink-0 flex flex-col items-start md:items-end gap-2">
-                <Link
-                  href="/notes"
-                  className="px-5 py-2.5 text-xs font-bold text-white bg-[#087BFF] hover:bg-[#1688FF] rounded-xl transition-colors shadow-xs flex items-center gap-1.5"
-                >
-                  <BookOpen className="w-4 h-4" />
-                  <span>Browse All Notes</span>
-                </Link>
-              </div>
+                <div className="flex items-center justify-between py-2.5">
+                  <dt className="text-slate-600 dark:text-slate-400">Free resources</dt>
+                  <dd className="font-display text-base font-extrabold text-emerald-600 dark:text-emerald-400">
+                    {freeCount}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between gap-3 py-2.5">
+                  <dt className="shrink-0 text-slate-600 dark:text-slate-400">Target examination</dt>
+                  <dd className="truncate text-right font-semibold text-slate-700 dark:text-slate-300">
+                    {subject.targetExamOrBoard || subject.code || 'All CSE Exams'}
+                  </dd>
+                </div>
+              </dl>
+              <Link
+                href={`/notes?subject=${subject.slug}`}
+                className="mt-3 flex items-center justify-between rounded-lg bg-slate-50 dark:bg-slate-800 px-3 py-2 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-700 transition-colors"
+              >
+                <span>Filter all notes by {subject.name}</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
             </div>
-          </div>
-
-          {/* Subject Notes Section */}
-          <div className="mb-12">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl sm:text-2xl font-bold text-[#07172B]">
-                Study Notes in {subject.name}
-              </h2>
-              <span className="text-xs text-slate-500 font-medium">
-                Showing {subjectNotes.length} notes
+          }
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            {subject.code && (
+              <span className="badge badge-slate">
+                Code: {subject.code}
               </span>
-            </div>
+            )}
+            <Link href={`/notes?subject=${subject.slug}`} className="btn btn-secondary btn-sm">
+              <span>View in Library</span>
+              <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+        </PageHero>
+
+        <section className="py-8 sm:py-12">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <SectionHeading
+              eyebrow="Study Packs"
+              title={`${subject.name} Revision Material`}
+              description="Chapter notes, PYQ packs and revision sheets for this subject. All paid packs include instant free sample pages."
+              action={{ label: 'Browse All Notes', href: '/notes' }}
+            />
 
             {subjectNotes.length === 0 ? (
-              <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 text-slate-500">
-                <FileText className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-                <p className="text-sm font-semibold text-[#07172B]">
-                  No notes published for this subject yet.
+              <div className="card p-8 sm:p-12 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400">
+                  <BookOpen className="h-6 w-6" />
+                </div>
+                <h3 className="font-display text-base font-bold text-slate-900 dark:text-white">
+                  Notes for this subject are currently being compiled
+                </h3>
+                <p className="mx-auto mt-1 max-w-sm text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Our team is authoring verified notes for {subject.name}. Explore other subjects or download free formula sheets in the meantime.
                 </p>
-                <p className="text-xs text-slate-400 mt-1">
-                  Our editorial team is preparing comprehensive study guides for this subject.
-                </p>
+                <div className="mt-5 flex flex-wrap justify-center gap-2">
+                  <Link href="/notes" className="btn btn-primary btn-sm">
+                    Browse All Notes
+                  </Link>
+                  <Link href="/free-resources" className="btn btn-secondary btn-sm">
+                    Free Resources
+                  </Link>
+                </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {subjectNotes.map((note) => (
-                  <NoteCard key={note.id} note={note} />
+                  <NoteCard key={note.id || note.slug} note={note} />
                 ))}
               </div>
             )}
-          </div>
 
-          {/* In-Page Ad Slot */}
-          <AdSlot slotId="subject_between_content" />
-
-          {/* Related Subjects */}
-          <div className="mt-14 pt-10 border-t border-slate-200">
-            <h3 className="text-lg font-bold text-[#07172B] mb-6">
-              Explore Related Subjects
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {relatedSubjects.map((rel) => (
-                <Link
-                  key={rel.id}
-                  href={`/subjects/${rel.slug}`}
-                  className="p-4 bg-white rounded-xl border border-slate-200 hover:border-[#087BFF] transition-all flex flex-col justify-between group"
-                >
-                  <div>
-                    <span className="text-[10px] font-bold text-[#087BFF] uppercase block mb-1">
-                      {rel.code}
-                    </span>
-                    <h4 className="text-sm font-bold text-[#07172B] group-hover:text-[#087BFF] transition-colors line-clamp-1">
-                      {rel.name}
-                    </h4>
-                  </div>
-                  <span className="text-[11px] text-slate-400 mt-3 block">
-                    {rel.noteCount} Notes available
-                  </span>
-                </Link>
-              ))}
+            <div className="mt-10">
+              <AdSlot slotId="subject_between_content" />
             </div>
+
+            {related.length > 0 && (
+              <div className="mt-12 pt-8 border-t border-slate-200 dark:border-slate-800">
+                <SectionHeading
+                  eyebrow="Related Fields"
+                  title="Explore Other Subjects"
+                  action={{ label: 'All Subjects', href: '/subjects' }}
+                />
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  {related.map((rel) => (
+                    <Link
+                      key={rel.id}
+                      href={`/subjects/${rel.slug}`}
+                      className="card p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 flex flex-col justify-between group transition-all"
+                    >
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                          {rel.code || DOMAIN_LABELS[rel.domain] || 'Subject'}
+                        </span>
+                        <h4 className="mt-1 font-display text-sm font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
+                          {rel.name}
+                        </h4>
+                      </div>
+                      <span className="mt-3 flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <span>
+                          {Number(rel.noteCount) > 0
+                            ? `${rel.noteCount} ${Number(rel.noteCount) === 1 ? 'pack' : 'packs'}`
+                            : 'In progress'}
+                        </span>
+                        <ArrowRight className="h-3 w-3 group-hover:translate-x-1 transition-transform" />
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        </div>
+        </section>
       </main>
 
       <Footer />

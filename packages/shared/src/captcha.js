@@ -7,7 +7,12 @@ import crypto from 'crypto';
 
 const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 const CAPTCHA_SECRET = process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY || process.env.CAPTCHA_SECRET_KEY || '';
-const CAPTCHA_ENFORCE = process.env.CAPTCHA_ENFORCE === 'true' || Boolean(CAPTCHA_SECRET);
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
+// Turnstile is only usable when BOTH halves of the key pair are configured.
+// A half-configured provider silently falls back to the signed math challenge
+// instead of locking every user out of the platform.
+const TURNSTILE_CONFIGURED = Boolean(CAPTCHA_SECRET && TURNSTILE_SITE_KEY);
+const CAPTCHA_ENFORCE = process.env.CAPTCHA_ENFORCE === 'true' || TURNSTILE_CONFIGURED;
 const HMAC_SECRET = process.env.JWT_SECRET || 'hritikpedia_captcha_hmac_fallback_secret_2026';
 
 // In-memory set of used tokens to prevent replay attacks (with timestamp pruning)
@@ -33,12 +38,27 @@ function pruneUsedTokens() {
 export async function verifyCaptcha({ token, ipAddress = '', action = '' }) {
   pruneUsedTokens();
 
-  // If CAPTCHA is not enforced and no secret is configured, allow in dev/test
-  if (!CAPTCHA_ENFORCE && !CAPTCHA_SECRET) {
-    // If dev bypass token provided or empty in local dev, allow
-    if (!token || token === 'dev_captcha_pass' || token === 'test_captcha_bypass') {
-      return { success: true, provider: 'dev_bypass' };
+  const isProduction = process.env.NODE_ENV === 'production';
+  const isDevBypassToken = token === 'dev_captcha_pass' || token === 'test_captcha_bypass';
+
+  if (isProduction) {
+    // Dev/test bypass tokens must never be accepted in production.
+    if (!token || isDevBypassToken) {
+      return { success: false, error: 'Invalid CAPTCHA token' };
     }
+
+    // Operators can explicitly demand an external bot-defense provider. In that
+    // case a missing key pair is a deployment error and we fail closed.
+    if (process.env.CAPTCHA_ENFORCE === 'true' && !TURNSTILE_CONFIGURED) {
+      return { success: false, error: 'CAPTCHA provider is not configured for production' };
+    }
+
+    // With no Turnstile key pair, production falls through to the signed,
+    // time-limited HMAC math challenge that /api/auth/captcha issues. This keeps
+    // login and registration usable without silently allowing empty captcha
+    // tokens (the branch below is development/test only).
+  } else if (!CAPTCHA_ENFORCE && !TURNSTILE_CONFIGURED && (!token || isDevBypassToken)) {
+    return { success: true, provider: 'dev_bypass' };
   }
 
   // Token is mandatory when enforcement is enabled
@@ -59,8 +79,8 @@ export async function verifyCaptcha({ token, ipAddress = '', action = '' }) {
     };
   }
 
-  // 1. Verify with Cloudflare Turnstile if secret key is present
-  if (CAPTCHA_SECRET) {
+  // 1. Verify with Cloudflare Turnstile only when the full key pair exists
+  if (TURNSTILE_CONFIGURED) {
     try {
       const formData = new URLSearchParams();
       formData.append('secret', CAPTCHA_SECRET);

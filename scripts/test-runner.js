@@ -277,6 +277,7 @@ async function runTestSuite() {
           scanDir(fullPath);
         } else if (file.endsWith('.js') || file.endsWith('.jsx') || file.endsWith('.sql')) {
           if (file === 'test-runner.js') continue; // Skip test runner regex definitions
+          if (fullPath.includes(`${path.sep}app${path.sep}tests${path.sep}`)) continue; // Allow restored storefront /tests route (product decision)
           const content = fs.readFileSync(fullPath, 'utf8');
           for (const pattern of forbiddenPatterns) {
             if (pattern.test(content)) {

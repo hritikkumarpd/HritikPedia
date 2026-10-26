@@ -14,7 +14,7 @@ export async function GET(request) {
     const res = await query(`
       SELECT n.id as note_id, n.title, n.slug, n.is_free, n.watermark_enabled, n.download_allowed,
              COALESCE(p.allow_download, n.download_allowed) as allow_download,
-             COALESCE(p.allow_print, FALSE) as allow_print,
+             COALESCE(p.allow_print, n.print_allowed) as allow_print,
              COALESCE(p.watermark_required, n.watermark_enabled) as watermark_required,
              COALESCE(p.max_devices, 3) as max_devices,
              COALESCE(p.revoked, FALSE) as revoked,

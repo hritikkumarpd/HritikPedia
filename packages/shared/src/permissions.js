@@ -43,6 +43,7 @@ export const PERMISSIONS = {
   COMMERCE_VIEW_ORDERS: 'commerce:view_orders',
   COMMERCE_REFUND: 'commerce:refund',
   COMMERCE_GRANT_MANUAL: 'commerce:grant_manual',
+  COMMERCE_MANAGE_COUPONS: 'commerce:manage_coupons',
 
   // Advertising & Monetization
   ADS_MANAGE: 'ads:manage',
@@ -78,6 +79,7 @@ export const ROLE_PERMISSIONS = {
     PERMISSIONS.SPONSORS_MANAGE,
     PERMISSIONS.NEWSLETTER_MANAGE,
     PERMISSIONS.MESSAGING_MANAGE,
+    PERMISSIONS.COMMERCE_MANAGE_COUPONS,
     PERMISSIONS.CONTENT_VIEW,
   ],
   [ROLES.SUPPORT_ADMIN]: [

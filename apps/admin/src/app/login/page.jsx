@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import BrandLogo from '../../components/BrandLogo';
+import ThemeToggle from '../../components/ThemeToggle';
 import CaptchaWidget from '../../components/CaptchaWidget';
-import { Shield, Lock, Mail, AlertTriangle, ArrowRight, Loader2 } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Loader2, ShieldCheck, Lock } from 'lucide-react';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -31,7 +32,13 @@ export default function AdminLoginPage() {
         throw new Error(data.error || 'Authentication failed');
       }
 
-      router.push('/');
+      const redirectTarget = new URLSearchParams(window.location.search).get('redirect');
+      const safeRedirect =
+        redirectTarget && redirectTarget.startsWith('/') && !redirectTarget.startsWith('//')
+          ? redirectTarget
+          : '/';
+
+      router.push(safeRedirect);
       router.refresh();
     } catch (err) {
       setError(err.message);
@@ -41,111 +48,115 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#07172B] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="flex justify-center mb-4">
-          <BrandLogo size="lg" theme="dark" />
+    <div className="flex min-h-screen flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+      <header className="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
+        <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-3.5 sm:px-6">
+          <BrandLogo size="sm" showTagline={false} />
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Staff Portal
+            </span>
+            <ThemeToggle size="sm" />
+          </div>
         </div>
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs font-semibold text-blue-400 mb-2">
-          <Shield className="w-3.5 h-3.5" />
-          <span>Restricted Admin &amp; Security Console</span>
-        </div>
-        <h2 className="text-xl font-bold tracking-tight text-white">
-          Authorized Staff Sign-In
-        </h2>
-        <p className="mt-1 text-xs text-slate-400">
-          Super Admin, Content Editor, and SOC Security Personnel only
-        </p>
-      </div>
+      </header>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
-        <div className="bg-[#0B1D36] py-8 px-6 shadow-2xl rounded-2xl border border-slate-800 sm:px-10">
-          {error && (
-            <div className="mb-6 p-4 rounded-xl bg-red-950/60 border border-red-500/40 text-red-200 text-sm flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-semibold">Access Denied</p>
-                <p className="text-xs text-red-300 mt-0.5">{error}</p>
-              </div>
+      <main className="flex flex-1 items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-6">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-3">
+              <Lock className="h-6 w-6" />
             </div>
-          )}
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+              Operations Console Login
+            </h1>
+            <p className="mt-1 text-xs text-slate-500">
+              Authorized credentials required for administrative access.
+            </p>
+          </div>
 
-          <form className="space-y-5" onSubmit={handleSubmit}>
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                Staff Email Address
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                  <Mail className="w-4 h-4" />
-                </div>
+          <div className="admin-card p-6 sm:p-8">
+            {error && (
+              <div
+                role="alert"
+                className="mb-5 flex items-start gap-2.5 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/40 p-3 text-xs font-semibold text-red-600 dark:text-red-400"
+              >
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                <p className="leading-relaxed">{error}</p>
+              </div>
+            )}
+
+            <form className="space-y-4" onSubmit={handleSubmit}>
+              <div>
+                <label htmlFor="admin-email" className="admin-label">
+                  Staff Email Address
+                </label>
                 <input
+                  id="admin-email"
                   type="email"
                   required
+                  autoComplete="username"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@hritikpedia.com"
-                  className="w-full pl-9 pr-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                  className="admin-input"
                 />
               </div>
-            </div>
 
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                Password
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                  <Lock className="w-4 h-4" />
-                </div>
+              <div>
+                <label htmlFor="admin-password" className="admin-label">
+                  Security Password
+                </label>
                 <input
+                  id="admin-password"
                   type="password"
                   required
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full pl-9 pr-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                  className="admin-input"
                 />
               </div>
-            </div>
 
-            <CaptchaWidget
-              action="admin_login"
-              onVerify={(tok) => setCaptchaToken(tok)}
-              onExpire={() => setCaptchaToken('')}
-            />
+              <CaptchaWidget
+                action="admin_login"
+                onVerify={(tok) => setCaptchaToken(tok)}
+                onExpire={() => setCaptchaToken('')}
+              />
 
-            <div className="pt-2">
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-2.5 px-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-medium text-sm rounded-xl shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                className="btn btn-primary w-full justify-center py-2.5 text-xs font-bold"
               >
                 {loading ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Verifying Credentials...</span>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Verifying Credentials…</span>
                   </>
                 ) : (
                   <>
-                    <span>Authenticate Console</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <span>Authenticate Console Access</span>
+                    <ArrowRight className="h-4 w-4" />
                   </>
                 )}
               </button>
-            </div>
-          </form>
-
-          <div className="mt-6 pt-6 border-t border-slate-800 text-center">
-            <p className="text-[11px] text-slate-500 uppercase tracking-wider font-semibold">
-              Warning: Security Monitored
-            </p>
-            <p className="text-[11px] text-slate-500 mt-1">
-              All unauthorized intrusion attempts, brute-force requests, and session tampering are logged to SOC security tables with client IP and forensic telemetry.
-            </p>
+            </form>
           </div>
+
+          <p className="mt-5 flex items-center justify-center gap-1.5 text-center text-xs text-slate-400">
+            <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+            <span>Audited session • Client IP and timestamps recorded</span>
+          </p>
         </div>
-      </div>
+      </main>
+
+      <footer className="border-t border-slate-200 dark:border-slate-800 py-4 text-center">
+        <p className="text-xs text-slate-500">
+          HritikPedia Platform Management System • All rights reserved
+        </p>
+      </footer>
     </div>
   );
 }

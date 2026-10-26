@@ -29,7 +29,7 @@ DATABASE_URL="your-neon-connection-string" npm run db:migrate
 # Seed subjects, educational notes, articles, and provision Super Admin
 DATABASE_URL="your-neon-connection-string" npm run db:seed
 ```
-*Note: A Super Admin will be provisioned at `admin@hritikpedia.com` with initial password `AdminSecurePassword2026!` (change immediately upon login).*
+*Note: The Super Admin is provisioned from the `SUPER_ADMIN_EMAIL` / `SUPER_ADMIN_PASSWORD` values in your environment. Change that password immediately after the first login.*
 
 ---
 
@@ -63,8 +63,13 @@ DATABASE_URL="your-neon-connection-string" npm run db:seed
    NODE_ENV=production
    DATABASE_URL=postgresql://user:password@ep-.../neondb?sslmode=require
    JWT_SECRET=same-strong-64-char-secret-as-web-app
-   NEXT_PUBLIC_APP_URL=https://admin.hritikpedia.com
+   NEXT_PUBLIC_APP_URL=https://hritikpedia.com
+   NEXT_PUBLIC_ADMIN_URL=https://admin.hritikpedia.com
+   COOKIE_SECURE=true
    ```
+   `NEXT_PUBLIC_APP_URL` must stay pointed at the **public web app**, even inside
+   the admin project — it powers "View store" links, preview links, and
+   newsletter unsubscribe URLs.
 4. Click **Deploy**. Assign your subdomain: `admin.hritikpedia.com`.
 
 ---
@@ -78,6 +83,32 @@ DATABASE_URL="your-neon-connection-string" npm run db:seed
 
 ---
 
+### Step 6: Self-Hosted / VPS Deployment
+
+The repository launchers load configuration from the repository root:
+
+1. Copy `.env.example` to `.env.production` and fill in real values.
+   `.env.local` is deliberately **ignored** in production so development URLs and
+   secrets cannot leak into a live deployment.
+2. Build and start both apps:
+   ```bash
+   npm ci
+   npm run build    # validates production config and bakes NEXT_PUBLIC_* values
+   npm start        # serves web on :3000 and admin on :3001
+   ```
+3. `npm start` fails fast when `DATABASE_URL`, `JWT_SECRET`, or
+   `NEXT_PUBLIC_APP_URL` is missing/unsafe. It also refuses to fall back to
+   embedded PGlite in production.
+4. `NEXT_PUBLIC_*` values are embedded at build time. Re-run `npm run build`
+   after changing the public URL or Razorpay key.
+
+For a local production preview without PostgreSQL, set
+`ALLOW_EMBEDDED_DB=true` and `ALLOW_LOCAL_PRODUCTION_BUILD=true`, use
+`NEXT_PUBLIC_APP_URL=http://localhost:3000`, and run only one app at a time
+(PGlite is single-process).
+
+---
+
 ## 3. Production Environment Variables Checklist
 
 | Variable Name | Required | Application | Description |
@@ -87,7 +118,12 @@ DATABASE_URL="your-neon-connection-string" npm run db:seed
 | `RAZORPAY_KEY_ID` | **YES** | Web | Live Razorpay merchant key identifier |
 | `RAZORPAY_KEY_SECRET` | **YES** | Web | Live Razorpay merchant key secret |
 | `RAZORPAY_WEBHOOK_SECRET` | **YES** | Web | Cryptographic secret for Razorpay webhook verification |
-| `NEXT_PUBLIC_APP_URL` | **YES** | Web & Admin | Base URL (`https://hritikpedia.com`) |
-| `RESEND_API_KEY` | Optional | Web & Admin | For transactional email receipts (falls back to mock if empty) |
+| `NEXT_PUBLIC_APP_URL` | **YES** | Web & Admin | Public web base URL (`https://hritikpedia.com`) |
+| `NEXT_PUBLIC_ADMIN_URL` | **YES** | Admin | Admin console URL (`https://admin.hritikpedia.com`) |
+| `COOKIE_SECURE` | **YES** | Web & Admin | `true` for HTTPS deployments (leave unset in production to default to secure) |
+| `NEXT_PUBLIC_RAZORPAY_KEY_ID` | **YES** | Web | Public checkout key; must match `RAZORPAY_KEY_ID` |
+| `SUPER_ADMIN_EMAIL` / `SUPER_ADMIN_PASSWORD` | Seed only | Shared | Initial admin credentials; change after first login |
+| `RESEND_API_KEY` / `EMAIL_FROM` | Newsletter | Web & Admin | Required to send campaigns; production broadcasts are blocked without them |
+| `DATABASE_SSL_REJECT_UNAUTHORIZED` | Optional | Shared | Set to `false` only if your database provider cannot present a trusted certificate |
 | `ENABLE_SMS` | Optional | Shared | Set to `false` for zero-budget dev; `true` for live Fast2SMS |
 | `ENABLE_WHATSAPP` | Optional | Shared | Set to `false` for zero-budget dev; `true` for Meta Cloud API |

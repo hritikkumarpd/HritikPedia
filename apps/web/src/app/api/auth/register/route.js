@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { query } from '@hritikpedia/shared/db';
-import { hashPassword, signToken } from '@hritikpedia/shared/auth';
+import { hashPassword, signToken, shouldUseSecureCookies } from '@hritikpedia/shared/auth';
 import { isValidEmail, isValidPassword } from '@hritikpedia/shared/validation';
 import { checkRateLimit, recordSecurityEvent, SECURITY_EVENT_TYPES } from '@hritikpedia/shared/audit';
 import { ROLES } from '@hritikpedia/shared/permissions';
@@ -111,7 +111,7 @@ export async function POST(request) {
     // Set secure HttpOnly cookie
     response.cookies.set('hritikpedia_session', token, {
       httpOnly: true,
-      secure: process.env.COOKIE_SECURE === 'true',
+      secure: shouldUseSecureCookies(),
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 24 * 7, // 7 days

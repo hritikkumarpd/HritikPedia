@@ -10,6 +10,14 @@ const RAZORPAY_WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET || 'dev_webh
 export async function createRazorpayOrder({ amountInRupees, receipt, notes = {} }) {
   const amountInPaise = Math.round(amountInRupees * 100);
 
+  // In production, real Razorpay credentials are mandatory — never silently fall back to mock
+  if (
+    process.env.NODE_ENV === 'production' &&
+    (RAZORPAY_KEY_ID === 'rzp_test_placeholder' || RAZORPAY_KEY_SECRET === 'dev_secret_key')
+  ) {
+    throw new Error('FATAL: Razorpay production credentials are not configured');
+  }
+
   // If in real production mode with valid credentials, call Razorpay API
   if (
     process.env.NODE_ENV === 'production' &&
@@ -62,8 +70,12 @@ export async function createRazorpayOrder({ amountInRupees, receipt, notes = {} 
 export function verifyPaymentSignature({ orderId, paymentId, signature }) {
   if (!orderId || !paymentId || !signature) return false;
 
-  // In local test development with mock keys
-  if (orderId.startsWith('order_dev_') && signature === 'dev_mock_signature') {
+  // In local test development with mock keys only — never accepted in production
+  if (
+    process.env.NODE_ENV !== 'production' &&
+    orderId.startsWith('order_dev_') &&
+    signature === 'dev_mock_signature'
+  ) {
     return true;
   }
 
@@ -100,6 +112,62 @@ export function verifyWebhookSignature({ rawBody, signature }) {
 }
 
 /**
+ * Issues a full or partial refund through the Razorpay Refunds API.
+ * Never called for local mock orders — those are handled by the admin route.
+ */
+export async function refundRazorpayPayment({ paymentId, amountInRupees, notes = {} }) {
+  if (!paymentId) {
+    throw new Error('A Razorpay payment ID is required to issue a refund');
+  }
+
+  if (
+    RAZORPAY_KEY_ID === 'rzp_test_placeholder' ||
+    RAZORPAY_KEY_SECRET === 'dev_secret_key'
+  ) {
+    throw new Error(
+      process.env.NODE_ENV === 'production'
+        ? 'Razorpay credentials are not configured for refunds'
+        : 'Razorpay credentials are not configured. Only local mock orders can be refunded.'
+    );
+  }
+
+  const payload = { notes };
+  if (typeof amountInRupees === 'number' && Number.isFinite(amountInRupees)) {
+    payload.amount = Math.round(amountInRupees * 100);
+  }
+
+  const auth = Buffer.from(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`).toString('base64');
+  const response = await fetch(
+    `https://api.razorpay.com/v1/payments/${encodeURIComponent(paymentId)}/refund`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Basic ${auth}`,
+      },
+      body: JSON.stringify(payload),
+    }
+  );
+
+  let data = null;
+  try {
+    data = await response.json();
+  } catch {
+    data = null;
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      `Razorpay refund failed: ${
+        data?.error?.description || data?.error?.reason || response.statusText || response.status
+      }`
+    );
+  }
+
+  return data;
+}
+
+/**
  * Formats amount in INR.
  */
 export function formatINR(amount) {
@@ -126,6 +194,7 @@ export const verifyRazorpaySignature = verifyPaymentSignature;
 
 export default {
   createRazorpayOrder,
+  refundRazorpayPayment,
   verifyPaymentSignature,
   verifyRazorpaySignature,
   verifyWebhookSignature,

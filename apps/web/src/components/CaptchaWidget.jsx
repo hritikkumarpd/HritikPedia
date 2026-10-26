@@ -1,13 +1,21 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ShieldCheck, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, RefreshCw, CheckCircle2, Loader2 } from 'lucide-react';
 
 /**
  * Universal CAPTCHA Widget
- * Integrates Cloudflare Turnstile with cryptographic math challenge fallback.
+ *
+ * The challenge is always issued by the server so the signed answer can be
+ * verified server-side. Cloudflare Turnstile is used when both halves of the
+ * key pair are configured; otherwise the API returns a signed math challenge.
  */
-export default function CaptchaWidget({ action = 'general', onVerify, onExpire }) {
+export default function CaptchaWidget({
+  action = 'general',
+  challengeEndpoint = '/api/auth/captcha',
+  onVerify,
+  onExpire,
+}) {
   const [provider, setProvider] = useState('loading');
   const [siteKey, setSiteKey] = useState('');
   const [mathChallenge, setMathChallenge] = useState(null);
@@ -18,36 +26,47 @@ export default function CaptchaWidget({ action = 'general', onVerify, onExpire }
   const widgetIdRef = useRef(null);
 
   const fetchChallenge = async () => {
-    try {
-      setError('');
-      setVerified(false);
-      setUserAnswer('');
-      if (onExpire) onExpire();
+    setError('');
+    setVerified(false);
+    setUserAnswer('');
+    setMathChallenge(null);
+    setProvider('loading');
+    if (onExpire) onExpire();
 
-      const res = await fetch(`/api/auth/captcha?action=${encodeURIComponent(action)}`);
+    try {
+      const res = await fetch(
+        `${challengeEndpoint}?action=${encodeURIComponent(action)}`,
+        { cache: 'no-store' }
+      );
       const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Unable to load verification challenge.');
+      }
 
       if (data.provider === 'cloudflare_turnstile' && data.siteKey) {
         setProvider('cloudflare_turnstile');
         setSiteKey(data.siteKey);
-      } else {
-        setProvider('crypto_math');
-        setMathChallenge(data);
+        return;
       }
-    } catch (err) {
-      console.warn('Captcha challenge fetch failed, falling back to basic verification:', err);
+
+      if (!data.question || !data.challenge) {
+        throw new Error('Unable to load verification challenge.');
+      }
+
       setProvider('crypto_math');
-      setMathChallenge({
-        question: 'Verify you are human (Type 7)',
-        challenge: `${Date.now()}:dev_sig`,
-        action,
-      });
+      setMathChallenge(data);
+    } catch (err) {
+      console.warn('Captcha challenge fetch failed:', err);
+      setProvider('crypto_math');
+      setMathChallenge(null);
+      setError('Could not load human verification. Please retry.');
     }
   };
 
   useEffect(() => {
     fetchChallenge();
-  }, [action]);
+  }, [action, challengeEndpoint]);
 
   // Handle Cloudflare Turnstile initialization
   useEffect(() => {
@@ -68,7 +87,7 @@ export default function CaptchaWidget({ action = 'general', onVerify, onExpire }
         widgetIdRef.current = window.turnstile.render(turnstileContainerRef.current, {
           sitekey: siteKey,
           action,
-          theme: 'dark',
+          theme: 'light',
           callback: (token) => {
             if (isMounted) {
               setVerified(true);
@@ -133,12 +152,16 @@ export default function CaptchaWidget({ action = 'general', onVerify, onExpire }
   // Handle Fallback Math Submission
   const handleMathSubmit = (e) => {
     e.preventDefault();
+    if (!mathChallenge?.challenge) {
+      setError('Verification challenge is not ready. Please retry.');
+      return;
+    }
     if (!userAnswer.trim()) {
       setError('Please answer the question to proceed.');
       return;
     }
 
-    // Compose token format: answer:challenge
+    // Compose token format: answer:timestamp:signature (verified server-side)
     const token = `${userAnswer.trim()}:${mathChallenge.challenge}`;
     setVerified(true);
     setError('');
@@ -147,39 +170,57 @@ export default function CaptchaWidget({ action = 'general', onVerify, onExpire }
 
   if (provider === 'cloudflare_turnstile') {
     return (
-      <div className="my-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col items-center justify-center">
-        <div ref={turnstileContainerRef} id="cf-turnstile-box" className="min-h-[65px] flex items-center justify-center" />
-        {error && <p className="text-xs text-rose-400 mt-2 font-medium">{error}</p>}
+      <div className="rounded-xl border border-line bg-paper-2/60 p-3">
+        <div className="flex items-center gap-2 pb-2">
+          <ShieldCheck className="h-3.5 w-3.5 text-mint" />
+          <span className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-muted">
+            Human verification
+          </span>
+        </div>
+        <div
+          ref={turnstileContainerRef}
+          id="cf-turnstile-box"
+          className="flex min-h-[65px] items-center justify-center"
+        />
+        {error && <p className="mt-2 text-[11px] font-semibold text-brick">{error}</p>}
       </div>
     );
   }
 
   return (
-    <div className="my-3 p-3.5 rounded-xl bg-gradient-to-r from-slate-900/90 to-slate-950 border border-slate-800 text-slate-300">
-      <div className="flex items-center justify-between mb-2">
+    <div className="rounded-xl border border-line bg-paper-2/60 p-3">
+      <div className="mb-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-emerald-400" />
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Human Verification</span>
+          <ShieldCheck className="h-3.5 w-3.5 text-mint" />
+          <span className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-muted">
+            Human verification
+          </span>
         </div>
         <button
           type="button"
           onClick={fetchChallenge}
           title="New challenge"
-          className="text-slate-400 hover:text-white transition-colors p-1"
+          aria-label="New verification challenge"
+          className="rounded-xl p-1 text-muted transition-colors hover:bg-paper-3 hover:text-ink"
         >
-          <RefreshCw className="w-3.5 h-3.5" />
+          <RefreshCw className="h-3 w-3" />
         </button>
       </div>
 
-      {verified ? (
-        <div className="flex items-center gap-2 py-1.5 px-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-medium">
-          <CheckCircle2 className="w-4 h-4" />
-          <span>Verification verified successfully</span>
+      {provider === 'loading' ? (
+        <div className="flex items-center gap-2 py-1.5 text-[11px] font-medium text-muted">
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-royal" />
+          Loading a fresh challenge…
         </div>
-      ) : (
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-slate-200 whitespace-nowrap">
-            {mathChallenge?.question || 'What is 5 + 3?'}
+      ) : verified ? (
+        <div className="flex items-center gap-2 rounded-xl border border-mint/25 bg-mint-soft px-3 py-2 text-[11px] font-bold text-mint">
+          <CheckCircle2 className="h-3.5 w-3.5" />
+          Verification complete
+        </div>
+      ) : mathChallenge ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="whitespace-nowrap font-display text-sm font-semibold text-ink">
+            {mathChallenge.question}
           </span>
           <input
             type="number"
@@ -192,19 +233,28 @@ export default function CaptchaWidget({ action = 'general', onVerify, onExpire }
               }
             }}
             placeholder="Answer"
-            className="w-20 px-2.5 py-1 text-sm bg-slate-950 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 text-center"
+            aria-label="Answer the verification question"
+            className="w-20 rounded-xl border border-line-strong bg-cream px-2.5 py-1 text-center text-sm font-bold text-ink placeholder:font-medium placeholder:text-muted/60 focus:border-royal focus:outline-none focus:ring-2 focus:ring-royal/15"
           />
           <button
             type="button"
             onClick={handleMathSubmit}
-            className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-lg transition-colors cursor-pointer"
+            className="btn btn-dark btn-sm px-3 py-1.5 text-[10px]"
           >
             Verify
           </button>
         </div>
+      ) : (
+        <button
+          type="button"
+          onClick={fetchChallenge}
+          className="text-[11px] font-bold text-royal underline underline-offset-2"
+        >
+          Retry verification
+        </button>
       )}
 
-      {error && <p className="text-xs text-rose-400 mt-2 font-medium">{error}</p>}
+      {error && <p className="mt-2 text-[11px] font-semibold text-brick">{error}</p>}
     </div>
   );
 }

@@ -6,9 +6,11 @@ export async function GET(request) {
   const action = searchParams.get('action') || 'general';
 
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
+  const secretKey =
+    process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY || process.env.CAPTCHA_SECRET_KEY || '';
 
-  // If Cloudflare Turnstile site key is configured, return it so client uses Turnstile
-  if (siteKey) {
+  // Only advertise Turnstile when the server can actually verify its tokens.
+  if (siteKey && secretKey) {
     return NextResponse.json({
       provider: 'cloudflare_turnstile',
       siteKey,

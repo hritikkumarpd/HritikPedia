@@ -1,393 +1,515 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import NoteCard from '../../components/NoteCard';
 import {
   Search,
-  Filter,
-  Sparkles,
-  BookOpen,
-  Layers,
-  Globe,
-  Landmark,
-  School,
-  Cpu,
-  GraduationCap,
-  Languages,
-  CheckCircle2,
+  ChevronDown,
+  SlidersHorizontal,
   X,
-  Tag,
+  RotateCcw,
+  Check,
+  LayoutGrid,
+  List,
+  BookOpen,
 } from 'lucide-react';
-import { PAN_INDIA_DOMAINS } from '@hritikpedia/shared/data';
 
-const DOMAIN_ICONS = {
-  all: Globe,
-  general_competitions: Landmark,
-  school_boards: School,
-  engineering: Cpu,
-  general_degree: GraduationCap,
+const TYPE_LABELS = {
+  notes: 'Complete Notes',
+  pyqs: 'PYQs & Solutions',
+  revision: 'Revision Sheets',
 };
 
+const normalize = (value) => (value || '').toString().trim().toLowerCase();
+
 export default function NotesCatalogClient({
-  initialNotes,
-  subjects,
-  initialDomain = 'all',
-  initialMedium = 'all',
-  initialTarget = 'all',
+  initialNotes = [],
+  subjects = [],
+  initialCategory = 'all',
 }) {
-  const [selectedDomain, setSelectedDomain] = useState(initialDomain);
-  const [selectedMedium, setSelectedMedium] = useState(initialMedium);
-  const [selectedTarget, setSelectedTarget] = useState(initialTarget);
-  const [selectedSubject, setSelectedSubject] = useState('all');
+  const [activeTab, setActiveTab] = useState(initialCategory);
   const [search, setSearch] = useState('');
-  const [priceFilter, setPriceFilter] = useState('all'); // 'all' | 'free' | 'under49' | 'paid'
-  const [sortBy, setSortBy] = useState('featured'); // 'featured' | 'price_low' | 'price_high' | 'pages'
+  const [selectedSubjects, setSelectedSubjects] = useState([]);
+  const [priceRange, setPriceRange] = useState('all');
+  const [selectedTypes, setSelectedTypes] = useState([]);
+  const [selectedLanguages, setSelectedLanguages] = useState([]);
+  const [sortBy, setSortBy] = useState('popularity');
+  const [viewMode, setViewMode] = useState('list'); // 'list' | 'grid'
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
-  // Extract all unique target exams/boards available
-  const availableTargets = useMemo(() => {
-    const set = new Set();
-    initialNotes.forEach((n) => {
-      if (n.targetExamOrBoard) {
-        if (selectedDomain === 'all' || n.domain === selectedDomain) {
-          set.add(n.targetExamOrBoard);
-        }
-      }
+  const tabs = useMemo(() => {
+    const counts = { all: initialNotes.length, notes: 0, pyqs: 0, revision: 0 };
+    initialNotes.forEach((note) => {
+      if (counts[note.contentType] !== undefined) counts[note.contentType] += 1;
     });
-    return Array.from(set).sort();
-  }, [initialNotes, selectedDomain]);
 
-  // Filtered subjects based on domain
-  const availableSubjects = useMemo(() => {
-    if (selectedDomain === 'all') return subjects;
-    return subjects.filter((s) => s.domain === selectedDomain);
-  }, [subjects, selectedDomain]);
-
-  // Domain Counts
-  const domainCounts = useMemo(() => {
-    const counts = { all: initialNotes.length };
-    PAN_INDIA_DOMAINS.forEach((d) => {
-      if (d.id !== 'all') {
-        counts[d.id] = initialNotes.filter((n) => n.domain === d.id).length;
-      }
-    });
-    return counts;
+    return [
+      { id: 'all', label: 'All Resources', count: counts.all },
+      { id: 'notes', label: 'Study Notes', count: counts.notes },
+      { id: 'pyqs', label: 'Solved PYQs', count: counts.pyqs },
+      { id: 'revision', label: 'Revision Sheets', count: counts.revision },
+    ];
   }, [initialNotes]);
 
-  // Main Filtering Logic
+  const subjectFilters = useMemo(() => {
+    const counts = new Map();
+
+    initialNotes.forEach((note) => {
+      const name = note.subjectName || 'General Studies';
+      counts.set(name, (counts.get(name) || 0) + 1);
+    });
+
+    subjects.forEach((subject) => {
+      if (subject?.name && !counts.has(subject.name)) counts.set(subject.name, 0);
+    });
+
+    return [...counts.entries()]
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+      .slice(0, 14);
+  }, [initialNotes, subjects]);
+
+  const languageFilters = useMemo(() => {
+    const values = new Set();
+    initialNotes.forEach((note) => {
+      if (note.language) values.add(note.language);
+    });
+    return [...values].sort();
+  }, [initialNotes]);
+
+  const typeFilters = useMemo(() => {
+    const values = new Set();
+    initialNotes.forEach((note) => {
+      if (note.contentType) values.add(note.contentType);
+    });
+    return [...values].sort((a, b) => (TYPE_LABELS[a] || a).localeCompare(TYPE_LABELS[b] || b));
+  }, [initialNotes]);
+
+  const priceRanges = [
+    { id: 'all', label: 'All prices' },
+    { id: 'free', label: '100% Free' },
+    { id: 'under100', label: 'Under ₹100' },
+    { id: '100-200', label: '₹100 – ₹200' },
+    { id: '200-500', label: '₹200 – ₹500' },
+    { id: 'above500', label: 'Above ₹500' },
+  ];
+
+  const toggle = (setter) => (value) => {
+    setter((prev) => (prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]));
+  };
+
+  const toggleSubject = toggle(setSelectedSubjects);
+  const toggleType = toggle(setSelectedTypes);
+  const toggleLanguage = toggle(setSelectedLanguages);
+
+  const activeFilterCount =
+    selectedSubjects.length +
+    selectedTypes.length +
+    selectedLanguages.length +
+    (priceRange !== 'all' ? 1 : 0);
+
+  const resetFilters = () => {
+    setSelectedSubjects([]);
+    setSelectedTypes([]);
+    setSelectedLanguages([]);
+    setPriceRange('all');
+    setSearch('');
+    setActiveTab('all');
+  };
+
   const filteredNotes = useMemo(() => {
+    const query = normalize(search);
+
     return initialNotes
       .filter((note) => {
-        // Domain filter
-        if (selectedDomain !== 'all' && note.domain !== selectedDomain) {
+        if (activeTab !== 'all' && note.contentType !== activeTab) return false;
+
+        if (selectedSubjects.length > 0) {
+          const subjectName = normalize(note.subjectName);
+          if (!selectedSubjects.some((s) => subjectName === normalize(s))) return false;
+        }
+
+        if (selectedTypes.length > 0 && !selectedTypes.includes(note.contentType)) {
           return false;
         }
 
-        // Target exam/board filter
-        if (selectedTarget !== 'all' && note.targetExamOrBoard !== selectedTarget) {
-          return false;
+        if (selectedLanguages.length > 0) {
+          const language = normalize(note.language);
+          if (!selectedLanguages.some((lang) => normalize(lang) === language)) return false;
         }
 
-        // Medium filter
-        if (selectedMedium !== 'all' && note.medium !== selectedMedium) {
-          return false;
-        }
+        const price = Number(note.price) || 0;
+        if (priceRange === 'free' && price !== 0) return false;
+        if (priceRange === 'under100' && price >= 100) return false;
+        if (priceRange === '100-200' && (price < 100 || price > 200)) return false;
+        if (priceRange === '200-500' && (price < 200 || price > 500)) return false;
+        if (priceRange === 'above500' && price <= 500) return false;
 
-        // Subject filter
-        if (
-          selectedSubject !== 'all' &&
-          note.subjectSlug !== selectedSubject &&
-          String(note.subjectId) !== selectedSubject
-        ) {
-          return false;
-        }
-
-        // Price filter
-        if (priceFilter === 'free' && (!note.isFree && note.price > 0)) return false;
-        if (priceFilter === 'under49' && (note.price > 49)) return false;
-        if (priceFilter === 'paid' && (note.isFree || note.price === 0)) return false;
-
-        // Keyword Search
-        if (search.trim()) {
-          const q = search.toLowerCase().trim();
-          const matches =
-            note.title.toLowerCase().includes(q) ||
-            note.description.toLowerCase().includes(q) ||
-            (note.topic && note.topic.toLowerCase().includes(q)) ||
-            (note.subjectName && note.subjectName.toLowerCase().includes(q)) ||
-            (note.targetExamOrBoard && note.targetExamOrBoard.toLowerCase().includes(q)) ||
-            (note.department && note.department.toLowerCase().includes(q)) ||
-            (note.topicsCovered && note.topicsCovered.some((t) => t.toLowerCase().includes(q)));
-          if (!matches) return false;
+        if (query) {
+          const haystack = [
+            note.title,
+            note.subjectName,
+            note.description,
+            note.topic,
+            note.examCategory,
+          ]
+            .map(normalize)
+            .join(' ');
+          if (!haystack.includes(query)) return false;
         }
 
         return true;
       })
       .sort((a, b) => {
-        if (sortBy === 'price_low') return (a.price || 0) - (b.price || 0);
-        if (sortBy === 'price_high') return (b.price || 0) - (a.price || 0);
-        if (sortBy === 'pages') return (b.pageCount || 0) - (a.pageCount || 0);
-        return (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0);
+        if (sortBy === 'price_low') return (Number(a.price) || 0) - (Number(b.price) || 0);
+        if (sortBy === 'price_high') return (Number(b.price) || 0) - (Number(a.price) || 0);
+        if (sortBy === 'rating') return (Number(b.rating) || 0) - (Number(a.rating) || 0);
+        if (Boolean(b.isFeatured) !== Boolean(a.isFeatured)) return b.isFeatured ? 1 : -1;
+        return (Number(b.rating) || 0) - (Number(a.rating) || 0);
       });
   }, [
     initialNotes,
-    selectedDomain,
-    selectedTarget,
-    selectedMedium,
-    selectedSubject,
-    priceFilter,
+    activeTab,
+    selectedSubjects,
+    selectedTypes,
+    selectedLanguages,
+    priceRange,
     search,
     sortBy,
   ]);
 
-  const resetFilters = () => {
-    setSelectedDomain('all');
-    setSelectedMedium('all');
-    setSelectedTarget('all');
-    setSelectedSubject('all');
-    setSearch('');
-    setPriceFilter('all');
-    setSortBy('featured');
-  };
-
-  const hasActiveFilters =
-    selectedDomain !== 'all' ||
-    selectedMedium !== 'all' ||
-    selectedTarget !== 'all' ||
-    selectedSubject !== 'all' ||
-    Boolean(search.trim()) ||
-    priceFilter !== 'all';
+  const activeChips = [
+    ...selectedSubjects.map((value) => ({
+      key: `subject-${value}`,
+      label: value,
+      clear: () => toggleSubject(value),
+    })),
+    ...selectedTypes.map((value) => ({
+      key: `type-${value}`,
+      label: TYPE_LABELS[value] || value,
+      clear: () => toggleType(value),
+    })),
+    ...selectedLanguages.map((value) => ({
+      key: `language-${value}`,
+      label: value,
+      clear: () => toggleLanguage(value),
+    })),
+    ...(priceRange !== 'all'
+      ? [
+          {
+            key: `price-${priceRange}`,
+            label: priceRanges.find((range) => range.id === priceRange)?.label || priceRange,
+            clear: () => setPriceRange('all'),
+          },
+        ]
+      : []),
+  ];
 
   return (
-    <div className="space-y-8">
-      {/* 1. TOP PAN-INDIA DOMAIN TABS */}
-      <div className="bg-white p-3 rounded-2xl border border-slate-200/90 shadow-xs">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-          {PAN_INDIA_DOMAINS.map((domain) => {
-            const Icon = DOMAIN_ICONS[domain.id] || Globe;
-            const isSelected = selectedDomain === domain.id;
-            const count = domainCounts[domain.id] || 0;
-
+    <div className="space-y-6">
+      {/* Category Tabs & Mobile Filter Trigger */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.id;
             return (
               <button
-                key={domain.id}
-                onClick={() => {
-                  setSelectedDomain(domain.id);
-                  setSelectedTarget('all');
-                  setSelectedSubject('all');
-                }}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
-                  isSelected
-                    ? 'bg-[#087BFF] text-white shadow-sm shadow-blue-500/20'
-                    : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200/60'
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                  isActive
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-slate-500'}`} />
-                <span>{domain.label}</span>
+                <span>{tab.label}</span>
                 <span
-                  className={`text-[11px] px-2 py-0.5 rounded-full font-black ${
-                    isSelected ? 'bg-white/20 text-white' : 'bg-slate-200/80 text-slate-700'
+                  className={`rounded-full px-1.5 py-0.2 text-[10px] font-bold ${
+                    isActive
+                      ? 'bg-blue-700 text-white'
+                      : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
                   }`}
                 >
-                  {count}
+                  {tab.count}
                 </span>
               </button>
             );
           })}
         </div>
-      </div>
 
-      {/* 2. ADVANCED FILTERS & SEARCH BAR */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs space-y-4">
-        {/* Row 1: Search & Dropdowns */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-          {/* Keyword Search */}
-          <div className="relative md:col-span-5">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by topic, exam, chapter (e.g. UPSC GS-2, BSEB 12th, AKTU DBMS)..."
-              className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-[#087BFF] focus:border-[#087BFF] text-[#26354B]"
-            />
-            {search && (
-              <button
-                onClick={() => setSearch('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-
-          {/* Target Exam / Board Dropdown */}
-          <div className="md:col-span-3">
-            <select
-              value={selectedTarget}
-              onChange={(e) => setSelectedTarget(e.target.value)}
-              className="w-full px-3 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-[#087BFF] text-[#26354B]"
-            >
-              <option value="all">Target: All Exams / Boards</option>
-              {availableTargets.map((target) => (
-                <option key={target} value={target}>
-                  🎯 {target}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Medium Dropdown */}
-          <div className="md:col-span-2">
-            <select
-              value={selectedMedium}
-              onChange={(e) => setSelectedMedium(e.target.value)}
-              className="w-full px-3 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-[#087BFF] text-[#26354B]"
-            >
-              <option value="all">All Mediums</option>
-              <option value="hindi">हिंदी माध्यम (Hindi)</option>
-              <option value="english">English Medium</option>
-              <option value="bilingual">Bilingual / Hinglish</option>
-            </select>
-          </div>
-
-          {/* Subject Dropdown */}
-          <div className="md:col-span-2">
-            <select
-              value={selectedSubject}
-              onChange={(e) => setSelectedSubject(e.target.value)}
-              className="w-full px-3 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-[#087BFF] text-[#26354B]"
-            >
-              <option value="all">All Subjects</option>
-              {availableSubjects.map((sub) => (
-                <option key={sub.id} value={sub.slug}>
-                  {sub.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Row 2: Price Filter Pills, Sorting, and Active Counts */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100">
-          {/* Price Filter Options */}
-          <div className="flex items-center gap-1.5 bg-slate-100/90 p-1 rounded-xl">
-            <button
-              onClick={() => setPriceFilter('all')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                priceFilter === 'all'
-                  ? 'bg-white text-[#07172B] shadow-xs'
-                  : 'text-slate-600 hover:text-[#07172B]'
-              }`}
-            >
-              All Prices
-            </button>
-            <button
-              onClick={() => setPriceFilter('free')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                priceFilter === 'free'
-                  ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-[#07172B]'
-              }`}
-            >
-              100% Free (₹0)
-            </button>
-            <button
-              onClick={() => setPriceFilter('under49')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                priceFilter === 'under49'
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-[#07172B]'
-              }`}
-            >
-              Under ₹49 Micro-Price
-            </button>
-            <button
-              onClick={() => setPriceFilter('paid')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                priceFilter === 'paid'
-                  ? 'bg-[#FFB923] text-[#07172B] shadow-xs'
-                  : 'text-slate-600 hover:text-[#07172B]'
-              }`}
-            >
-              Premium Notes
-            </button>
-          </div>
-
-          {/* Sort By Dropdown */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-500 font-medium">Sort:</span>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-[#087BFF] text-[#26354B]"
-            >
-              <option value="featured">Featured First</option>
-              <option value="price_low">Price: Low to High</option>
-              <option value="price_high">Price: High to Low</option>
-              <option value="pages">Most Pages</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Filter Summary & Reset Bar */}
-        <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
-          <div className="flex items-center gap-2">
-            <span>
-              Showing <strong className="text-[#07172B] font-black">{filteredNotes.length}</strong> study notes
-            </span>
-            {selectedDomain !== 'all' && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[11px] font-semibold">
-                <Tag className="w-3 h-3" />
-                {PAN_INDIA_DOMAINS.find((d) => d.id === selectedDomain)?.label}
-              </span>
-            )}
-            {selectedMedium !== 'all' && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 text-[11px] font-semibold">
-                <Languages className="w-3 h-3" />
-                {selectedMedium === 'hindi' ? 'हिंदी माध्यम' : selectedMedium === 'english' ? 'English' : 'Bilingual'}
-              </span>
-            )}
-            {selectedTarget !== 'all' && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 text-[11px] font-semibold">
-                🎯 {selectedTarget}
-              </span>
-            )}
-          </div>
-
-          {hasActiveFilters && (
-            <button
-              onClick={resetFilters}
-              className="text-[#087BFF] hover:underline font-bold cursor-pointer flex items-center gap-1"
-            >
-              <X className="w-3.5 h-3.5" />
-              <span>Reset all filters</span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* 3. NOTES GRID */}
-      {filteredNotes.length === 0 ? (
-        <div className="p-12 text-center bg-white rounded-2xl border border-slate-200">
-          <BookOpen className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <h3 className="text-base font-bold text-[#07172B]">No study notes matched your filter criteria</h3>
-          <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-            Try adjusting your search terms or selecting &quot;All Domains&quot; to see notes across UPSC, BPSC, BSEB, CBSE, and Engineering.
-          </p>
+        {/* View Mode & Mobile Filter Trigger */}
+        <div className="flex items-center justify-between sm:justify-end gap-2">
+          {/* Mobile Filter Toggle */}
           <button
-            onClick={resetFilters}
-            className="mt-4 px-4 py-2 text-xs font-bold text-white bg-[#087BFF] hover:bg-[#1688FF] rounded-lg transition-colors cursor-pointer"
+            type="button"
+            onClick={() => setMobileFilterOpen((open) => !open)}
+            className="btn btn-secondary btn-sm lg:hidden"
           >
-            Show All Notes
+            <SlidersHorizontal className="h-3.5 w-3.5" />
+            <span>Filters</span>
+            {activeFilterCount > 0 && (
+              <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-1 text-[9px] font-bold text-white">
+                {activeFilterCount}
+              </span>
+            )}
           </button>
+
+          {/* Grid / List View Toggle */}
+          <div className="flex items-center rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-0.5">
+            <button
+              type="button"
+              onClick={() => setViewMode('list')}
+              aria-label="List view"
+              className={`p-1.5 rounded-md transition-colors cursor-pointer ${
+                viewMode === 'list'
+                  ? 'bg-slate-100 dark:bg-slate-800 text-blue-600 dark:text-blue-400 font-bold'
+                  : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+              }`}
+            >
+              <List className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('grid')}
+              aria-label="Grid view"
+              className={`p-1.5 rounded-md transition-colors cursor-pointer ${
+                viewMode === 'grid'
+                  ? 'bg-slate-100 dark:bg-slate-800 text-blue-600 dark:text-blue-400 font-bold'
+                  : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+              }`}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </button>
+          </div>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredNotes.map((note) => (
-            <NoteCard key={note.id} note={note} />
-          ))}
-        </div>
-      )}
+      </div>
+
+      <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
+        {/* Sidebar Filters */}
+        <aside
+          className={`${
+            mobileFilterOpen ? 'block' : 'hidden lg:block'
+          } lg:col-span-3 lg:sticky lg:top-24 space-y-4`}
+        >
+          <div className="card p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+                Filter Library
+              </h2>
+              {activeFilterCount > 0 && (
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer"
+                >
+                  Reset all
+                </button>
+              )}
+            </div>
+
+            <div className="max-h-[70vh] space-y-5 overflow-y-auto py-3">
+              {/* Subject Filter */}
+              <FilterSection title="Computer Science Subjects">
+                {subjectFilters.length === 0 ? (
+                  <p className="text-xs text-slate-400">No subjects listed.</p>
+                ) : (
+                  subjectFilters.map((subject) => (
+                    <FilterCheck
+                      key={subject.name}
+                      checked={selectedSubjects.includes(subject.name)}
+                      onChange={() => toggleSubject(subject.name)}
+                      label={subject.name}
+                      count={subject.count}
+                    />
+                  ))
+                )}
+              </FilterSection>
+
+              {/* Price Filter */}
+              <FilterSection title="Access & Price">
+                {priceRanges.map((range) => (
+                  <label
+                    key={range.id}
+                    className="flex cursor-pointer select-none items-center gap-2 rounded-md py-1 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-blue-600 transition-colors"
+                  >
+                    <input
+                      type="radio"
+                      name="price_filter"
+                      checked={priceRange === range.id}
+                      onChange={() => setPriceRange(range.id)}
+                      className="h-3.5 w-3.5 accent-blue-600"
+                    />
+                    <span>{range.label}</span>
+                  </label>
+                ))}
+              </FilterSection>
+
+              {/* Content Type */}
+              <FilterSection title="Material Type">
+                {typeFilters.map((type) => (
+                  <FilterCheck
+                    key={type}
+                    checked={selectedTypes.includes(type)}
+                    onChange={() => toggleType(type)}
+                    label={TYPE_LABELS[type] || type}
+                  />
+                ))}
+              </FilterSection>
+
+              {/* Language Filter */}
+              {languageFilters.length > 0 && (
+                <FilterSection title="Medium & Language">
+                  {languageFilters.map((language) => (
+                    <FilterCheck
+                      key={language}
+                      checked={selectedLanguages.includes(language)}
+                      onChange={() => toggleLanguage(language)}
+                      label={language}
+                    />
+                  ))}
+                </FilterSection>
+              )}
+            </div>
+          </div>
+        </aside>
+
+        {/* Results Area */}
+        <section className="space-y-4 lg:col-span-9">
+          {/* Top Search & Sort Controls Bar */}
+          <div className="card p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
+            <div className="relative w-full sm:max-w-md">
+              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search by topic, subject or exam..."
+                className="input-field pl-9 pr-8 text-xs h-9"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch('')}
+                  aria-label="Clear search"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+              <span className="text-xs text-slate-500 whitespace-nowrap">Sort by:</span>
+              <div className="relative">
+                <select
+                  value={sortBy}
+                  onChange={(event) => setSortBy(event.target.value)}
+                  className="cursor-pointer appearance-none rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 py-1.5 pl-3 pr-8 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:border-blue-600"
+                >
+                  <option value="popularity">Most Popular</option>
+                  <option value="rating">Highest Rated</option>
+                  <option value="price_low">Price: Low to High</option>
+                  <option value="price_high">Price: High to Low</option>
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+              </div>
+            </div>
+          </div>
+
+          {/* Active Filter Chips */}
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+            <p className="text-slate-500">
+              Showing <span className="font-bold text-slate-900 dark:text-white">{filteredNotes.length}</span> of {initialNotes.length} study packs
+            </p>
+
+            {activeChips.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                {activeChips.map((chip) => (
+                  <button
+                    key={chip.key}
+                    type="button"
+                    onClick={chip.clear}
+                    className="inline-flex items-center gap-1 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-0.5 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:border-rose-400 hover:text-rose-600 transition-colors cursor-pointer"
+                  >
+                    <span>{chip.label}</span>
+                    <X className="h-2.5 w-2.5" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Notes List or Grid */}
+          {filteredNotes.length === 0 ? (
+            <div className="card p-8 sm:p-12 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400">
+                <BookOpen className="h-6 w-6" />
+              </div>
+              <h4 className="font-display text-base font-bold text-slate-900 dark:text-white">
+                No matching study notes found
+              </h4>
+              <p className="mx-auto mt-1 max-w-sm text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Try a different search term or clear active filters to see all available study packs.
+              </p>
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="btn btn-primary btn-sm mt-4"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                <span>Reset all filters</span>
+              </button>
+            </div>
+          ) : viewMode === 'list' ? (
+            <div className="space-y-3">
+              {filteredNotes.map((note) => (
+                <NoteCard key={note.id || note.slug} note={note} variant="list" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredNotes.map((note) => (
+                <NoteCard key={note.id || note.slug} note={note} variant="grid" />
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
     </div>
+  );
+}
+
+function FilterSection({ title, children }) {
+  return (
+    <div>
+      <h3 className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+        {title}
+      </h3>
+      <div className="space-y-1">{children}</div>
+    </div>
+  );
+}
+
+function FilterCheck({ checked, onChange, label, count }) {
+  return (
+    <label className="flex cursor-pointer select-none items-center justify-between rounded-md py-1 text-xs text-slate-700 dark:text-slate-300 hover:text-blue-600 transition-colors">
+      <span className="flex min-w-0 items-center gap-2">
+        <span
+          className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors ${
+            checked
+              ? 'border-blue-600 bg-blue-600 text-white'
+              : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800'
+          }`}
+        >
+          {checked && <Check className="h-3 w-3 stroke-[3]" />}
+        </span>
+        <input type="checkbox" checked={checked} onChange={onChange} className="sr-only" />
+        <span className="truncate">{label}</span>
+      </span>
+      {typeof count === 'number' && (
+        <span className="ml-2 text-[10px] font-semibold text-slate-400">{count}</span>
+      )}
+    </label>
   );
 }

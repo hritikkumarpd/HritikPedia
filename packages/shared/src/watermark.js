@@ -23,7 +23,8 @@ export function maskEmail(email) {
 export function generateWatermarkMetadata({ user, note, ipAddress = '' }) {
   const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
   const maskedEmail = user ? maskEmail(user.email) : 'Public Preview';
-  const shortUserId = user?.id ? `UID-${String(user.id).substring(0, 8)}` : 'GUEST';
+  const resolvedUserId = user?.id || user?.userId;
+  const shortUserId = resolvedUserId ? `UID-${String(resolvedUserId).substring(0, 8)}` : 'GUEST';
   const noteTitle = note?.title ? (note.title.length > 25 ? note.title.substring(0, 25) + '...' : note.title) : 'Hritikpedia Study Notes';
 
   const primaryText = `HRITIKPEDIA • ${maskedEmail} • ${shortUserId}`;

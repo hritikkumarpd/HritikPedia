@@ -1,0 +1,38 @@
+# Hritikpedia — Complete Academic Knowledge Manifest
+
+## Platform Overview
+Hritikpedia (https://hritikpedia.vercel.app) is an online educational repository and revision platform designed to solve the problem of fragmented study notes and voluminous textbooks for Computer Science engineering students and competitive examination aspirants in India.
+
+## Domains Covered
+1. **Engineering Core (Computer Science & Information Technology):**
+   - Database Management Systems (DBMS): Relational algebra, SQL, ER modeling, normal forms (1NF, 2NF, 3NF, BCNF, 4NF, 5NF), indexing (B-trees, B+ trees), and ACID transaction management.
+   - Operating Systems: Process synchronization (Semaphores, Mutexes, Monitors), CPU scheduling (FCFS, SJF, Round Robin, Multilevel Feedback), virtual memory paging, segmentation, deadlock avoidance (Banker's Algorithm), and file systems.
+   - Computer Networks: OSI 7-layer model, TCP/IP protocol suite, IPv4/IPv6 subnetting, routing algorithms (Dijkstra, Bellman-Ford), flow control, congestion management, and transport layer protocols.
+   - Digital Logic & Computer Architecture: Boolean algebra theorems, Karnaugh maps (2, 3, 4 variables), combinational logic (Adders, Multiplexers, Decoders), sequential logic (Flip-flops, Counters, Shift Registers), pipelining, and instruction sets.
+   - Data Structures & Algorithms: Asymptotic notations (Big-O, Omega, Theta), balanced binary search trees (AVL, Red-Black), graph algorithms (BFS, DFS, Prim's, Kruskal's), and dynamic programming.
+
+2. **Competitive Educator Examinations:**
+   - Bihar STET (Paper-II) Computer Science: Complete topic-wise curriculum notes, previous year question solutions, pedagogy summaries, and exam-readiness blueprints.
+   - BPSC Computer Teacher (TRE 3.0 & 4.0): Syllabus alignment, 5-year question trends, and high-yield revision cards.
+   - GATE CSE: Rigorous proofs, time-complexity analysis sheets, and numerical shortcuts.
+
+3. **School Boards & Degree:**
+   - CBSE & BSEB Class 11-12 Computer Science: Python programming, SQL syntax, and computer networks handbooks.
+   - BCA / B.Sc / MCA: Semester-wise revision packs.
+
+## Core URLs
+- Homepage: https://hritikpedia.vercel.app/
+- Study Notes: https://hritikpedia.vercel.app/notes
+- Subject Index: https://hritikpedia.vercel.app/subjects
+- Free Revision Shelf: https://hritikpedia.vercel.app/free-resources
+- Mock Test Series: https://hritikpedia.vercel.app/tests
+- Articles & Guides: https://hritikpedia.vercel.app/articles
+- Mission & Standards: https://hritikpedia.vercel.app/about
+- Support & Contact: https://hritikpedia.vercel.app/contact
+
+## Contact & Social Verification
+- Email: support@hritikpedia.com
+- YouTube: https://youtube.com/@hritikpedia
+- Telegram: https://t.me/hritikpedia
+- LinkedIn: https://linkedin.com/company/hritikpedia
+- Twitter/X: https://x.com/hritikpedia

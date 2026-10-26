@@ -1,0 +1,31 @@
+# Hritikpedia
+
+> Stop Searching. Start Learning. The Definitive Computer Science & Engineering Study Library.
+
+Hritikpedia is an open-access educational notes and examination preparation platform engineered for university engineering students (B.Tech, BCA, MCA) and competitive examination candidates (Bihar STET Computer Science Paper-II, BPSC Computer Teacher TRE 3.0/4.0, GATE CSE).
+
+## Core Academic Offerings
+- **Study Notes & Exam Blueprints:** High-yield chapter summaries, relational database normalization proofs (1NF to BCNF), operating system semaphore concurrency primitives, deadlock handling algorithms, network subnetting tables, and digital logic Karnaugh maps.
+- **Evaluative Mock Tests:** Interactive, timed examinations simulating official examination environments with instant score analytics, accuracy percentages, and step-by-step verified answer explanations.
+- **Open-Access Free Revision Shelf:** 100% free downloadable formula cheat sheets, SQL syntaxes, truth tables, and networking protocol stacks.
+- **Editorial Study Guides:** Deep-dive conceptual roadmaps and syllabus-mapping strategies written by verified academic mentors.
+
+## Key Sections & Canonical Links
+- [All Study Notes](https://hritikpedia.vercel.app/notes): Browse complete curriculum-mapped notes by domain and exam.
+- [Computer Science Subjects](https://hritikpedia.vercel.app/subjects): Subject directory covering DBMS, Operating Systems, Computer Networks, Digital Logic, and Algorithms.
+- [Evaluative Mock Tests](https://hritikpedia.vercel.app/tests): Practice timed examination papers for Bihar STET and BPSC Teacher.
+- [Free Revision Handbooks](https://hritikpedia.vercel.app/free-resources): Zero-cost formula blueprints and reference sheets.
+- [Educational Guides & Strategy](https://hritikpedia.vercel.app/articles): Technical articles on database normalization, concurrency, and exam blueprints.
+- [About & Editorial Standards](https://hritikpedia.vercel.app/about): Mission, authentic data policy, zero-budget-first model, and educator credentials.
+- [Student Support & Helpdesk](https://hritikpedia.vercel.app/contact): Official support desk and student assistance.
+
+## Standards & Integrity
+- All materials are mapped strictly against official syllabus notifications (BSEB, BPSC, AKTU, BEU).
+- Zero fabricated testimonials; verified mathematical proofs with zero skipped steps.
+- Clean distraction-free in-browser reading with dynamic security watermarking.
+
+## Contact & Entity Information
+- Organization: Hritikpedia Education Platform
+- Official Email: support@hritikpedia.com
+- Support Hours: Monday – Saturday, 10:00 – 19:00 IST
+- Social Channels: YouTube (@hritikpedia), Telegram (t.me/hritikpedia), LinkedIn (company/hritikpedia), X (@hritikpedia)

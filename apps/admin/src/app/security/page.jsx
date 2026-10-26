@@ -45,15 +45,15 @@ export default function AdminSecurityPage() {
 
   const getThreatSeverity = (eventType) => {
     if (eventType.includes('signature_failed') || eventType.includes('tampering')) {
-      return { label: 'CRITICAL', color: 'bg-red-500/20 text-red-400 border-red-500/30' };
+      return { label: 'CRITICAL', color: 'bg-brick-soft text-brick border-brick/30' };
     }
     if (eventType.includes('denied_pdf') || eventType.includes('login_failed')) {
-      return { label: 'HIGH', color: 'bg-amber-500/20 text-amber-400 border-amber-500/30' };
+      return { label: 'HIGH', color: 'bg-sun-soft text-sun-dark border-sun-dark/30' };
     }
     if (eventType.includes('rate_limit')) {
-      return { label: 'MEDIUM', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' };
+      return { label: 'MEDIUM', color: 'bg-sun-soft text-sun-dark border-sun-dark/30' };
     }
-    return { label: 'INFO', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' };
+    return { label: 'INFO', color: 'bg-royal-soft text-royal border-royal/25' };
   };
 
   const filteredThreats = securityEvents.filter((e) => {
@@ -78,38 +78,38 @@ export default function AdminSecurityPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">
+          <h1 className="text-2xl font-bold text-ink tracking-tight">
             Security Operations Center (SOC) &amp; Audit Logs
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-muted mt-1">
             Real-time intrusion detection, HMAC tampering alerts, and immutable administrative mutation logs
           </p>
         </div>
 
         <button
           onClick={fetchSecurityData}
-          className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition-colors self-start sm:self-auto"
+          className="inline-flex items-center gap-2 px-3 py-1.5 bg-paper-2 hover:bg-paper-3 text-ink-soft text-xs font-semibold rounded-xl border border-line-strong transition-colors self-start sm:self-auto"
         >
-          <Activity className="w-3.5 h-3.5 text-emerald-400" />
+          <Activity className="w-3.5 h-3.5 text-mint" />
           <span>Refresh Live Feed</span>
         </button>
       </div>
 
       {error && (
-        <div className="p-4 rounded-xl bg-red-950/60 border border-red-500/40 text-red-200 text-xs">
+        <div className="p-4 rounded-xl bg-brick-soft border border-brick/30 text-brick text-xs">
           {error}
         </div>
       )}
 
       {/* Tabs & Search */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#0B1D36] p-3 rounded-2xl border border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-cream p-3 rounded-2xl border border-line">
         <div className="flex items-center gap-2">
           <button
             onClick={() => setTab('threats')}
             className={`px-4 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center gap-2 ${
               tab === 'threats'
-                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                ? 'bg-royal text-cream shadow-md shadow-none'
+                : 'text-muted hover:text-ink hover:bg-paper-2'
             }`}
           >
             <ShieldAlert className="w-3.5 h-3.5" />
@@ -120,8 +120,8 @@ export default function AdminSecurityPage() {
             onClick={() => setTab('audit')}
             className={`px-4 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center gap-2 ${
               tab === 'audit'
-                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                ? 'bg-royal text-cream shadow-md shadow-none'
+                : 'text-muted hover:text-ink hover:bg-paper-2'
             }`}
           >
             <CheckCircle className="w-3.5 h-3.5" />
@@ -130,23 +130,23 @@ export default function AdminSecurityPage() {
         </div>
 
         <div className="relative w-full sm:w-64">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Filter records..."
-            className="w-full pl-9 pr-4 py-1.5 bg-slate-900 border border-slate-700/80 rounded-xl text-white text-xs focus:outline-none focus:border-blue-500"
+            className="w-full pl-9 pr-4 py-1.5 bg-paper-2 border border-line-strong rounded-xl text-ink text-xs focus:outline-none focus:border-royal"
           />
         </div>
       </div>
 
       {/* Table Area */}
-      <div className="bg-[#0B1D36] rounded-2xl border border-slate-800 shadow-xl overflow-hidden">
+      <div className="bg-cream rounded-2xl border border-line shadow-xl overflow-hidden">
         <div className="overflow-x-auto">
           {tab === 'threats' ? (
-            <table className="w-full text-left text-xs text-slate-300">
-              <thead className="bg-slate-900/80 text-[11px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-800">
+            <table className="w-full text-left text-xs text-ink-soft">
+              <thead className="bg-paper-2 text-[11px] font-semibold text-muted uppercase tracking-wider border-b border-line">
                 <tr>
                   <th className="px-5 py-3.5">Severity</th>
                   <th className="px-5 py-3.5">Event Signature</th>
@@ -156,17 +156,17 @@ export default function AdminSecurityPage() {
                   <th className="px-5 py-3.5 text-right">Telemetry</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-line">
                 {loading ? (
                   <tr>
-                    <td colSpan="6" className="px-5 py-12 text-center text-slate-500">
-                      <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-blue-500" />
+                    <td colSpan="6" className="px-5 py-12 text-center text-muted">
+                      <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-royal" />
                       <span>Reading threat stream...</span>
                     </td>
                   </tr>
                 ) : filteredThreats.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="px-5 py-10 text-center text-slate-500">
+                    <td colSpan="6" className="px-5 py-10 text-center text-muted">
                       Zero threat events matching query. Perimeter is secure.
                     </td>
                   </tr>
@@ -174,7 +174,7 @@ export default function AdminSecurityPage() {
                   filteredThreats.map((evt) => {
                     const sev = getThreatSeverity(evt.event_type);
                     return (
-                      <tr key={evt.id} className="hover:bg-slate-800/30 transition-colors">
+                      <tr key={evt.id} className="hover:bg-paper-2/30 transition-colors">
                         <td className="px-5 py-4">
                           <span
                             className={`px-2 py-0.5 rounded text-[10px] font-bold border ${sev.color}`}
@@ -182,16 +182,16 @@ export default function AdminSecurityPage() {
                             {sev.label}
                           </span>
                         </td>
-                        <td className="px-5 py-4 font-mono font-semibold text-white">
+                        <td className="px-5 py-4 font-mono font-semibold text-ink">
                           {evt.event_type}
                         </td>
-                        <td className="px-5 py-4 font-mono text-slate-400 text-[11px]">
+                        <td className="px-5 py-4 font-mono text-muted text-[11px]">
                           {evt.ip_address}
                         </td>
-                        <td className="px-5 py-4 text-slate-300">
+                        <td className="px-5 py-4 text-ink-soft">
                           {evt.user_email || 'Anonymous / Unauth'}
                         </td>
-                        <td className="px-5 py-4 text-slate-400 text-[11px]">
+                        <td className="px-5 py-4 text-muted text-[11px]">
                           {new Date(evt.created_at).toLocaleString()}
                         </td>
                         <td className="px-5 py-4 text-right">
@@ -202,7 +202,7 @@ export default function AdminSecurityPage() {
                                 data: evt,
                               })
                             }
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-blue-300 hover:text-white text-xs transition-colors"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-paper-2 hover:bg-paper-3 text-royal hover:text-ink text-xs transition-colors"
                           >
                             <Terminal className="w-3.5 h-3.5" />
                             <span>Payload</span>
@@ -215,8 +215,8 @@ export default function AdminSecurityPage() {
               </tbody>
             </table>
           ) : (
-            <table className="w-full text-left text-xs text-slate-300">
-              <thead className="bg-slate-900/80 text-[11px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-800">
+            <table className="w-full text-left text-xs text-ink-soft">
+              <thead className="bg-paper-2 text-[11px] font-semibold text-muted uppercase tracking-wider border-b border-line">
                 <tr>
                   <th className="px-5 py-3.5">Staff Actor</th>
                   <th className="px-5 py-3.5">Action Code</th>
@@ -225,33 +225,33 @@ export default function AdminSecurityPage() {
                   <th className="px-5 py-3.5 text-right">Details</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-line">
                 {loading ? (
                   <tr>
-                    <td colSpan="5" className="px-5 py-12 text-center text-slate-500">
-                      <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-blue-500" />
+                    <td colSpan="5" className="px-5 py-12 text-center text-muted">
+                      <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-royal" />
                       <span>Reading audit trail...</span>
                     </td>
                   </tr>
                 ) : filteredAudit.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="px-5 py-10 text-center text-slate-500">
+                    <td colSpan="5" className="px-5 py-10 text-center text-muted">
                       No administrative mutation logs found.
                     </td>
                   </tr>
                 ) : (
                   filteredAudit.map((log) => (
-                    <tr key={log.id} className="hover:bg-slate-800/30 transition-colors">
-                      <td className="px-5 py-4 font-semibold text-white">
+                    <tr key={log.id} className="hover:bg-paper-2/30 transition-colors">
+                      <td className="px-5 py-4 font-semibold text-ink">
                         {log.actor_email}
                       </td>
                       <td className="px-5 py-4">
-                        <span className="font-mono text-blue-400 font-semibold">{log.action}</span>
+                        <span className="font-mono text-royal font-semibold">{log.action}</span>
                       </td>
-                      <td className="px-5 py-4 text-slate-300">
+                      <td className="px-5 py-4 text-ink-soft">
                         {log.entity_type} #{log.entity_id || ''}
                       </td>
-                      <td className="px-5 py-4 text-slate-400 text-[11px]">
+                      <td className="px-5 py-4 text-muted text-[11px]">
                         {new Date(log.created_at).toLocaleString()}
                       </td>
                       <td className="px-5 py-4 text-right">
@@ -262,7 +262,7 @@ export default function AdminSecurityPage() {
                               data: log,
                             })
                           }
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-blue-300 hover:text-white text-xs transition-colors"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-paper-2 hover:bg-paper-3 text-royal hover:text-ink text-xs transition-colors"
                         >
                           <Code className="w-3.5 h-3.5" />
                           <span>Inspect</span>
@@ -280,22 +280,22 @@ export default function AdminSecurityPage() {
       {/* JSON Inspector Modal */}
       {activeInspector && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0B1D36] border border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Terminal className="w-4 h-4 text-blue-400" />
+          <div className="bg-cream border border-line rounded-2xl w-full max-w-lg p-6 shadow-2xl relative">
+            <div className="flex items-center justify-between pb-3 border-b border-line">
+              <h3 className="text-sm font-bold text-ink flex items-center gap-2">
+                <Terminal className="w-4 h-4 text-royal" />
                 <span>{activeInspector.title}</span>
               </h3>
               <button
                 onClick={() => setActiveInspector(null)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800"
+                className="text-muted hover:text-ink p-1 rounded-lg hover:bg-paper-2"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="mt-4 bg-slate-950 p-4 rounded-xl border border-slate-800/80 overflow-x-auto max-h-80">
-              <pre className="text-xs font-mono text-emerald-400 whitespace-pre-wrap">
+            <div className="mt-4 bg-paper-2 p-4 rounded-xl border border-line overflow-x-auto max-h-80">
+              <pre className="text-xs font-mono text-mint whitespace-pre-wrap">
                 {JSON.stringify(activeInspector.data, null, 2)}
               </pre>
             </div>
@@ -303,7 +303,7 @@ export default function AdminSecurityPage() {
             <div className="mt-4 flex justify-end">
               <button
                 onClick={() => setActiveInspector(null)}
-                className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-medium"
+                className="px-4 py-1.5 bg-paper-2 hover:bg-paper-3 text-ink rounded-xl text-xs font-medium"
               >
                 Close Inspector
               </button>

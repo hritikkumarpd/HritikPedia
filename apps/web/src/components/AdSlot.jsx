@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ExternalLink, Sparkles } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { INITIAL_AD_SLOTS } from '@hritikpedia/shared/data';
 
 export default function AdSlot({
@@ -13,62 +13,59 @@ export default function AdSlot({
   const isAdSenseEnabled = process.env.NEXT_PUBLIC_ADSENSE_ENABLED === 'true';
   const isDirectSponsorsEnabled = process.env.ENABLE_DIRECT_SPONSOR_ADS !== 'false';
 
-  // Find slot configuration from shared catalogue
+  // Find slot configuration from the shared catalogue
   const slotConfig = INITIAL_AD_SLOTS.find((s) => s.id === slotId) || customBanner;
 
   if (!slotConfig || !slotConfig.active) {
     return null;
   }
 
-  // If AdSense is active and approved
+  // AdSense placement (mounts Network tag when the account is approved)
   if (isAdSenseEnabled && slotConfig.type === 'adsense') {
     return (
       <div className={`w-full my-6 flex flex-col items-center ${className}`}>
-        <span className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold mb-1">
-          Advertisement
-        </span>
+        <span className="eyebrow-plain mb-1 text-[9px] text-muted">Advertisement</span>
         <div
           id={`ad-slot-${slotId}`}
-          className="w-full max-w-4xl min-h-[90px] bg-slate-100 border border-slate-200 rounded-lg flex items-center justify-center text-slate-400 text-xs"
+          className="flex w-full max-w-4xl min-h-[90px] items-center justify-center border border-line bg-paper-2 text-[11px] text-muted"
         >
-          {/* AdSense ins tag will mount here when account is approved */}
-          <span>AdSense Placement: {slotId}</span>
+          <span>AdSense placement: {slotId}</span>
         </div>
       </div>
     );
   }
 
-  // Direct Sponsor / Educational Placement
+  // Direct sponsor placement
   if (isDirectSponsorsEnabled) {
     return (
       <div className={`w-full my-6 ${className}`}>
-        <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-[#07172B] via-[#0B1D36] to-[#07172B] p-4 sm:p-5 text-white shadow-xs border border-blue-900/40">
-          <div className="absolute top-2 right-3 flex items-center gap-1 text-[10px] uppercase font-bold tracking-wider text-slate-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#FFB923]"></span>
-            <span>Sponsored Resource</span>
+        <div className="relative overflow-hidden rounded-xl border border-ink bg-ink p-4 text-cream sm:p-5">
+          <div className="absolute right-3 top-3 flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.1em] text-white/45">
+            <span className="h-1.5 w-1.5 bg-sun" aria-hidden="true"></span>
+            <span>Sponsored</span>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 text-[10px] font-bold bg-[#FFB923]/20 text-[#FFB923] rounded border border-[#FFB923]/40">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="pt-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="badge border-sun/50 bg-sun/15 text-[#f0b9a2]">
                   {slotConfig.sponsorName || 'Featured'}
                 </span>
-                <h4 className="font-bold text-sm sm:text-base text-white">
+                <h4 className="font-display text-[14px] font-extrabold text-cream sm:text-[15px]">
                   {slotConfig.title}
                 </h4>
               </div>
-              <p className="text-xs text-slate-300 max-w-2xl">
+              <p className="mt-1.5 max-w-2xl text-[12px] leading-relaxed text-white/60">
                 {slotConfig.bannerText}
               </p>
             </div>
 
             <Link
               href={slotConfig.link || '/notes'}
-              className="shrink-0 inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-bold bg-[#087BFF] hover:bg-[#1688FF] text-white rounded-lg transition-colors shadow-xs"
+              className="btn btn-outline-light btn-sm shrink-0"
             >
-              <span>Explore Resource</span>
-              <ExternalLink className="w-3.5 h-3.5" />
+              <span>Explore resource</span>
+              <ExternalLink className="h-3.5 w-3.5" />
             </Link>
           </div>
         </div>

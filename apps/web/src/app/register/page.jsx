@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import BrandLogo from '../../components/BrandLogo';
+import AuthShell from '../../components/AuthShell';
 import CaptchaWidget from '../../components/CaptchaWidget';
-import { User, Mail, Lock, ArrowRight, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react';
+import { User, Mail, Lock, ArrowRight, AlertCircle, Loader2, Check } from 'lucide-react';
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
@@ -15,7 +15,25 @@ export default function RegisterPage() {
   const [captchaToken, setCaptchaToken] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [redirectTarget, setRedirectTarget] = useState('');
   const router = useRouter();
+
+  // Keep the post-registration destination when students switch to sign-in.
+  useEffect(() => {
+    const target = new URLSearchParams(window.location.search).get('redirect') || '';
+    if (target.startsWith('/') && !target.startsWith('//')) setRedirectTarget(target);
+  }, []);
+
+  const loginHref = redirectTarget
+    ? `/login?redirect=${encodeURIComponent(redirectTarget)}`
+    : '/login';
+
+  const getSafeRedirect = () => {
+    if (typeof window === 'undefined') return '/dashboard';
+    const target = new URLSearchParams(window.location.search).get('redirect');
+    if (target && target.startsWith('/') && !target.startsWith('//')) return target;
+    return '/dashboard';
+  };
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -38,7 +56,7 @@ export default function RegisterPage() {
       const data = await res.json();
 
       if (res.ok) {
-        router.push('/dashboard');
+        router.push(getSafeRedirect());
         router.refresh();
       } else {
         setError(data.error || 'Registration failed');
@@ -51,131 +69,138 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-[#F5F8FC] p-4">
-      <div className="w-full max-w-md bg-white rounded-3xl p-8 sm:p-10 border border-slate-200/90 shadow-md space-y-6">
-        <div className="text-center space-y-2">
-          <BrandLogo size="md" className="mx-auto" />
-          <h1 className="text-2xl font-black text-[#07172B] tracking-tight mt-4">
-            Create Student Account
-          </h1>
-          <p className="text-xs text-slate-500">
-            Start learning with verified study notes and blueprints
-          </p>
-        </div>
-
-        {error && (
-          <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2.5 text-red-700 text-xs">
-            <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-
-        <form onSubmit={handleRegister} className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold text-[#07172B] mb-1.5">
-              Full Name
-            </label>
-            <div className="relative">
-              <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Hritik Kumar"
-                required
-                className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-[#087BFF] text-[#26354B]"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-[#07172B] mb-1.5">
-              Email Address
-            </label>
-            <div className="relative">
-              <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="student@college.edu"
-                required
-                className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-[#087BFF] text-[#26354B]"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-[#07172B] mb-1.5">
-              Password (min. 8 characters)
-            </label>
-            <div className="relative">
-              <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-[#087BFF] text-[#26354B]"
-              />
-            </div>
-          </div>
-
-          <div className="flex items-start gap-2 pt-1">
-            <input
-              id="agree-terms"
-              type="checkbox"
-              checked={agreeTerms}
-              onChange={(e) => setAgreeTerms(e.target.checked)}
-              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#087BFF] focus:ring-[#087BFF]"
-              required
-            />
-            <label htmlFor="agree-terms" className="text-xs text-slate-500 leading-snug">
-              I agree to the{' '}
-              <Link href="/terms" className="text-[#087BFF] hover:underline" target="_blank">
-                Terms of Service
-              </Link>{' '}
-              and{' '}
-              <Link href="/privacy-policy" className="text-[#087BFF] hover:underline" target="_blank">
-                Privacy Policy
-              </Link>
-              .
-            </label>
-          </div>
-
-          <CaptchaWidget
-            action="register"
-            onVerify={(tok) => setCaptchaToken(tok)}
-            onExpire={() => setCaptchaToken('')}
-          />
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 px-4 text-xs sm:text-sm font-bold text-white bg-[#087BFF] hover:bg-[#1688FF] rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70 mt-2"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Creating Account...</span>
-              </>
-            ) : (
-              <>
-                <span>Complete Registration</span>
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
-          </button>
-        </form>
-
-        <div className="pt-4 border-t border-slate-100 text-center text-xs text-slate-500">
+    <AuthShell
+      eyebrow="Create your account"
+      title="Your own study desk, in two minutes."
+      subtitle="Save your notes, keep your receipts and read on any device. Creating an account is free."
+      footer={
+        <>
           Already registered?{' '}
-          <Link href="/login" className="font-bold text-[#087BFF] hover:underline">
-            Sign In here
+          <Link href={loginHref} className="font-bold text-primary hover:underline">
+            Sign in instead
           </Link>
+        </>
+      }
+    >
+      {error && (
+        <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/40 p-3 text-xs font-semibold text-red-600 dark:text-red-400">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>{error}</span>
         </div>
-      </div>
-    </div>
+      )}
+
+      <form onSubmit={handleRegister} className="space-y-4">
+        <div>
+          <label htmlFor="register-name" className="field-label">
+            Full name
+          </label>
+          <div className="relative">
+            <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+            <input
+              id="register-name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Your full name"
+              autoComplete="name"
+              required
+              className="input-field pl-10"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label htmlFor="register-email" className="field-label">
+            Email address
+          </label>
+          <div className="relative">
+            <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+            <input
+              id="register-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="student@college.edu"
+              autoComplete="email"
+              required
+              className="input-field pl-10"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label htmlFor="register-password" className="field-label">
+            Password <span className="normal-case tracking-normal text-slate-400 font-normal">(min. 8 characters)</span>
+          </label>
+          <div className="relative">
+            <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+            <input
+              id="register-password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Create a strong password"
+              autoComplete="new-password"
+              minLength={8}
+              required
+              className="input-field pl-10"
+            />
+          </div>
+        </div>
+
+        <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 p-3">
+          <span
+            className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors ${
+              agreeTerms ? 'border-primary bg-primary text-white' : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800'
+            }`}
+          >
+            {agreeTerms && <Check className="h-2.5 w-2.5" strokeWidth={3} />}
+          </span>
+          <input
+            id="agree-terms"
+            type="checkbox"
+            checked={agreeTerms}
+            onChange={(e) => setAgreeTerms(e.target.checked)}
+            className="sr-only"
+            required
+          />
+          <span className="text-xs leading-relaxed text-slate-500">
+            I agree to the{' '}
+            <Link href="/terms" className="font-semibold text-primary hover:underline" target="_blank">
+              Terms of Service
+            </Link>{' '}
+            and{' '}
+            <Link
+              href="/privacy-policy"
+              className="font-semibold text-primary hover:underline"
+              target="_blank"
+            >
+              Privacy Policy
+            </Link>
+            .
+          </span>
+        </label>
+
+        <CaptchaWidget
+          action="register"
+          onVerify={(tok) => setCaptchaToken(tok)}
+          onExpire={() => setCaptchaToken('')}
+        />
+
+        <button type="submit" disabled={loading} className="btn btn-primary w-full">
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Creating your account…
+            </>
+          ) : (
+            <>
+              Create free account
+              <ArrowRight className="h-4 w-4" />
+            </>
+          )}
+        </button>
+      </form>
+    </AuthShell>
   );
 }

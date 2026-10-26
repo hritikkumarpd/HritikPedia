@@ -2,16 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import {
-  Sliders,
   Shield,
-  Download,
-  Printer,
-  Smartphone,
-  Eye,
-  AlertTriangle,
-  CheckCircle,
   Loader2,
-  Lock,
   Save,
   X,
 } from 'lucide-react';
@@ -86,11 +78,12 @@ export default function AdminPdfPoliciesPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-white tracking-tight">
-          PDF Protection &amp; Dynamic Watermark Policies
+        <h1 className="text-2xl font-bold text-ink tracking-tight">
+          Reader Protection &amp; Access Policies
         </h1>
-        <p className="text-xs text-slate-400 mt-1">
-          Configure server-side dynamic watermarking, zero-download enforcement, and forensic trace headers
+        <p className="text-xs text-muted mt-1">
+          Configure dynamic watermarking, print permission, and emergency access revocation. Changes
+          apply immediately in the web reader.
         </p>
       </div>
 
@@ -98,33 +91,33 @@ export default function AdminPdfPoliciesPage() {
         <div
           className={`p-4 rounded-xl text-xs font-medium flex items-center justify-between ${
             message.type === 'error'
-              ? 'bg-red-950/60 border border-red-500/40 text-red-200'
-              : 'bg-emerald-950/60 border border-emerald-500/40 text-emerald-200'
+              ? 'bg-brick-soft border border-brick/30 text-brick'
+              : 'bg-mint-soft border border-mint/30 text-mint'
           }`}
         >
           <span>{message.text}</span>
-          <button onClick={() => setMessage(null)} className="text-slate-400 hover:text-white">
+          <button onClick={() => setMessage(null)} className="text-muted hover:text-ink">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
 
       {/* Live Watermark Simulator */}
-      <div className="bg-[#0B1D36] p-6 rounded-2xl border border-slate-800 shadow-xl">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+      <div className="bg-cream p-6 rounded-2xl border border-line shadow-xl">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-line">
           <div>
-            <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-              <Shield className="w-4 h-4 text-blue-400" />
+            <h2 className="text-sm font-semibold text-ink flex items-center gap-2">
+              <Shield className="w-4 h-4 text-royal" />
               <span>In-Browser Dynamic Watermark Simulator</span>
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-muted mt-0.5">
               Every rendered page overlays authenticated learner identity across diagonal coordinates
             </p>
           </div>
 
           <div className="flex items-center gap-4 text-xs">
             <div className="flex items-center gap-2">
-              <span className="text-slate-400">Opacity:</span>
+              <span className="text-muted">Opacity:</span>
               <input
                 type="range"
                 min="0.08"
@@ -132,9 +125,9 @@ export default function AdminPdfPoliciesPage() {
                 step="0.02"
                 value={previewOpacity}
                 onChange={(e) => setPreviewOpacity(parseFloat(e.target.value))}
-                className="w-24 accent-blue-500"
+                className="w-24 accent-royal"
               />
-              <span className="text-slate-300 font-mono w-8">
+              <span className="text-ink-soft font-mono w-8">
                 {Math.round(previewOpacity * 100)}%
               </span>
             </div>
@@ -143,15 +136,15 @@ export default function AdminPdfPoliciesPage() {
 
         {/* Visual Simulated Page */}
         <div className="mt-6 flex flex-col items-center justify-center">
-          <div className="w-full max-w-xl h-64 bg-slate-900 border border-slate-700/80 rounded-xl relative overflow-hidden shadow-2xl flex flex-col justify-between p-6">
+          <div className="w-full max-w-xl h-64 bg-paper-2 border border-line-strong rounded-xl relative overflow-hidden shadow-2xl flex flex-col justify-between p-6">
             {/* Background Sample Content */}
             <div className="space-y-3 opacity-30 select-none pointer-events-none">
-              <div className="h-4 bg-slate-400 rounded w-3/4"></div>
-              <div className="h-3 bg-slate-500 rounded w-full"></div>
-              <div className="h-3 bg-slate-500 rounded w-5/6"></div>
-              <div className="h-3 bg-slate-500 rounded w-4/6"></div>
-              <div className="h-3 bg-slate-500 rounded w-full"></div>
-              <div className="h-3 bg-slate-500 rounded w-2/3"></div>
+              <div className="h-4 bg-muted rounded w-3/4"></div>
+              <div className="h-3 bg-muted rounded w-full"></div>
+              <div className="h-3 bg-muted rounded w-5/6"></div>
+              <div className="h-3 bg-muted rounded w-4/6"></div>
+              <div className="h-3 bg-muted rounded w-full"></div>
+              <div className="h-3 bg-muted rounded w-2/3"></div>
             </div>
 
             {/* Diagonal SVG Watermark Overlay */}
@@ -160,19 +153,19 @@ export default function AdminPdfPoliciesPage() {
               style={{ opacity: previewOpacity }}
             >
               <div className="rotate-[-28deg] text-center space-y-1">
-                <p className="font-extrabold text-white text-lg tracking-widest font-mono uppercase">
+                <p className="font-extrabold text-ink text-lg tracking-widest font-mono uppercase">
                   HRITIKPEDIA &bull; {maskedEmailPreview}
                 </p>
-                <p className="text-[11px] font-mono text-slate-300 font-bold tracking-wider">
+                <p className="text-[11px] font-mono text-ink-soft font-bold tracking-wider">
                   UID: 1042 &bull; IP: 203.0.113.88 &bull; UTC: {new Date().toISOString().slice(0, 19)}
                 </p>
-                <p className="text-[9px] font-mono text-amber-300 uppercase tracking-widest">
+                <p className="text-[9px] font-mono text-sun-dark uppercase tracking-widest">
                   PROPRIETARY &bull; UNAUTHORIZED REDISTRIBUTION IS ILLEGAL
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center justify-between text-[11px] text-slate-500 border-t border-slate-800 pt-3 select-none">
+            <div className="flex items-center justify-between text-[11px] text-muted border-t border-line pt-3 select-none">
               <span>Hritikpedia Notes Viewer &bull; Page 1 of 24</span>
               <span>Protected by Dynamic Watermark Engine</span>
             </div>
@@ -181,41 +174,54 @@ export default function AdminPdfPoliciesPage() {
       </div>
 
       {/* Per-Note Policy Configuration Table */}
-      <div className="bg-[#0B1D36] rounded-2xl border border-slate-800 shadow-xl overflow-hidden">
-        <div className="p-5 border-b border-slate-800">
-          <h2 className="text-sm font-semibold text-white">Access &amp; Download Enforcement by Note</h2>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Overrides default zero-download security on a per-resource basis
+      <div className="bg-cream rounded-2xl border border-line shadow-xl overflow-hidden">
+        <div className="p-5 border-b border-line">
+          <h2 className="text-sm font-semibold text-ink">Access &amp; Print Policies by Note</h2>
+          <p className="text-xs text-muted mt-0.5">
+            Revoking a note immediately returns an access-denied response to every reader, including
+            students who already purchased it.
           </p>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-900/80 text-[11px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-800">
+          <table className="w-full text-left text-xs text-ink-soft">
+            <thead className="bg-paper-2 text-[11px] font-semibold text-muted uppercase tracking-wider border-b border-line">
               <tr>
                 <th className="px-5 py-3.5">Note Title</th>
                 <th className="px-5 py-3.5">Watermark Required</th>
-                <th className="px-5 py-3.5">Allow Download</th>
                 <th className="px-5 py-3.5">Allow Print</th>
-                <th className="px-5 py-3.5">Max Concurrent Devices</th>
                 <th className="px-5 py-3.5">Emergency Revoke</th>
                 <th className="px-5 py-3.5 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody className="divide-y divide-line">
               {loading ? (
                 <tr>
-                  <td colSpan="7" className="px-5 py-12 text-center text-slate-500">
-                    <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-blue-500" />
+                  <td colSpan="5" className="px-5 py-12 text-center text-muted">
+                    <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-royal" />
                     <span>Loading security policies...</span>
+                  </td>
+                </tr>
+              ) : policies.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="px-5 py-12 text-center text-muted">
+                    No notes are available to configure yet.
                   </td>
                 </tr>
               ) : (
                 policies.map((p) => (
-                  <tr key={p.note_id} className="hover:bg-slate-800/30 transition-colors">
-                    <td className="px-5 py-4 font-semibold text-white">
+                  <tr
+                    key={p.note_id}
+                    className={`transition-colors ${
+                      p.revoked ? 'bg-brick-soft hover:bg-brick-soft' : 'hover:bg-paper-2/30'
+                    }`}
+                  >
+                    <td className="px-5 py-4 font-semibold text-ink">
                       <div>{p.title}</div>
-                      <div className="text-[10px] text-slate-400 font-mono mt-0.5">ID: {p.note_id}</div>
+                      <div className="text-[10px] text-muted font-mono mt-0.5">
+                        ID: {p.note_id}
+                        {p.revoked ? ' · access revoked' : ''}
+                      </div>
                     </td>
 
                     <td className="px-5 py-4">
@@ -225,18 +231,7 @@ export default function AdminPdfPoliciesPage() {
                         onChange={(e) =>
                           handleLocalChange(p.note_id, 'watermark_required', e.target.checked)
                         }
-                        className="w-4 h-4 rounded text-blue-600 accent-blue-600 bg-slate-900 border-slate-700"
-                      />
-                    </td>
-
-                    <td className="px-5 py-4">
-                      <input
-                        type="checkbox"
-                        checked={p.allow_download}
-                        onChange={(e) =>
-                          handleLocalChange(p.note_id, 'allow_download', e.target.checked)
-                        }
-                        className="w-4 h-4 rounded text-blue-600 accent-blue-600 bg-slate-900 border-slate-700"
+                        className="w-4 h-4 rounded text-royal-dark accent-royal bg-paper-2 border-line-strong"
                       />
                     </td>
 
@@ -247,39 +242,31 @@ export default function AdminPdfPoliciesPage() {
                         onChange={(e) =>
                           handleLocalChange(p.note_id, 'allow_print', e.target.checked)
                         }
-                        className="w-4 h-4 rounded text-blue-600 accent-blue-600 bg-slate-900 border-slate-700"
+                        className="w-4 h-4 rounded text-royal-dark accent-royal bg-paper-2 border-line-strong"
                       />
                     </td>
 
                     <td className="px-5 py-4">
-                      <input
-                        type="number"
-                        min="1"
-                        max="10"
-                        value={p.max_devices || 3}
-                        onChange={(e) =>
-                          handleLocalChange(p.note_id, 'max_devices', parseInt(e.target.value, 10))
-                        }
-                        className="w-16 px-2 py-1 bg-slate-900 border border-slate-700 rounded-lg text-white text-xs text-center"
-                      />
-                    </td>
-
-                    <td className="px-5 py-4">
-                      <input
-                        type="checkbox"
-                        checked={p.revoked}
-                        onChange={(e) =>
-                          handleLocalChange(p.note_id, 'revoked', e.target.checked)
-                        }
-                        className="w-4 h-4 rounded text-red-600 accent-red-600 bg-slate-900 border-slate-700"
-                      />
+                      <label className="inline-flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={p.revoked}
+                          onChange={(e) =>
+                            handleLocalChange(p.note_id, 'revoked', e.target.checked)
+                          }
+                          className="w-4 h-4 rounded text-brick accent-brick bg-paper-2 border-line-strong"
+                        />
+                        <span className={p.revoked ? 'text-brick font-semibold' : 'text-muted'}>
+                          {p.revoked ? 'Revoked' : 'Live'}
+                        </span>
+                      </label>
                     </td>
 
                     <td className="px-5 py-4 text-right">
                       <button
                         onClick={() => handleUpdatePolicy(p)}
                         disabled={updatingId === p.note_id}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold shadow transition-colors disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-royal hover:bg-royal-dark text-cream rounded-lg text-xs font-semibold shadow transition-colors disabled:opacity-50"
                       >
                         {updatingId === p.note_id ? (
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />

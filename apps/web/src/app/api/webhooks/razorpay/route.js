@@ -39,7 +39,7 @@ export async function POST(request) {
 
       if (orderId) {
         const orderRes = await query(
-          'SELECT id, user_id, note_id, status FROM orders WHERE order_id = $1',
+          'SELECT id, user_id, note_id, status, coupon_code FROM orders WHERE order_id = $1',
           [orderId]
         );
 
@@ -48,10 +48,21 @@ export async function POST(request) {
 
           await transaction(async (txQuery) => {
             // Update order status if not already marked paid
-            await txQuery(
-              `UPDATE orders SET status = 'paid', payment_id = $1, updated_at = NOW() WHERE id = $2`,
+            const updated = await txQuery(
+              `UPDATE orders SET status = 'paid', payment_id = $1, updated_at = NOW()
+               WHERE id = $2 AND status <> 'paid'
+               RETURNING id`,
               [paymentId, order.id]
             );
+
+            if (updated.rows.length > 0 && order.coupon_code) {
+              await txQuery(
+                `UPDATE coupons
+                 SET current_uses = current_uses + 1
+                 WHERE code = $1 AND current_uses < max_uses`,
+                [order.coupon_code]
+              );
+            }
 
             // Ensure entitlement is active
             await txQuery(

@@ -29,6 +29,6 @@ export async function GET(request) {
     });
   } catch (err) {
     console.error('Error fetching purchases:', err);
-    return NextResponse.json({ purchases: [] });
+    return NextResponse.json({ error: 'Failed to fetch purchases' }, { status: 500 });
   }
 }

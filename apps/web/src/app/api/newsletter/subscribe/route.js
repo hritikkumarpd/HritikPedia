@@ -16,7 +16,9 @@ export async function POST(request) {
 
   try {
     const body = await request.json();
-    const { email, consent, source = 'website' } = body;
+    const { email, consent } = body;
+    const rawSource = typeof body.source === 'string' ? body.source.trim() : 'website';
+    const source = /^[a-zA-Z0-9_-]{1,50}$/.test(rawSource) ? rawSource : 'website';
 
     if (!isValidEmail(email)) {
       return NextResponse.json(
@@ -32,25 +34,35 @@ export async function POST(request) {
       );
     }
 
-    // Attempt writing to subscribers table in PostgreSQL if table exists
+    const cleanEmail = email.toLowerCase().trim();
+
+    await query(
+      `INSERT INTO newsletter_subscribers (email, source, consent_given, status, created_at)
+       VALUES ($1, $2, TRUE, 'active', NOW())
+       ON CONFLICT (email) DO UPDATE
+       SET status = 'active', consent_given = TRUE, source = $2, unsubscribed_at = NULL, updated_at = NOW()`,
+      [cleanEmail, source]
+    );
+
+    // GDPR-style consent audit trail (best-effort; never blocks the signup)
     try {
       await query(
-        `INSERT INTO newsletter_subscribers (email, source, consent_given, status, created_at)
-         VALUES ($1, $2, $3, 'active', NOW())
-         ON CONFLICT (email) DO UPDATE SET status = 'active', updated_at = NOW()`,
-        [email.toLowerCase().trim(), source, true]
+        `INSERT INTO consent_records (email, consent_type, granted, ip_address, user_agent)
+         VALUES ($1, 'newsletter', TRUE, $2, $3)`,
+        [cleanEmail, ip, request.headers.get('user-agent') || 'Unknown']
       );
     } catch {
-      // If DB migration not yet run, subscriber is still handled safely in local dev
+      // Consent table may not be migrated yet — subscriber is already stored
     }
 
     return NextResponse.json({
       success: true,
       message: 'You have been successfully subscribed to Hritikpedia academic updates.',
     });
-  } catch {
+  } catch (err) {
+    console.error('Newsletter subscribe error:', err);
     return NextResponse.json(
-      { error: 'An unexpected error occurred. Please try again.' },
+      { error: 'We could not save your subscription right now. Please try again.' },
       { status: 500 }
     );
   }

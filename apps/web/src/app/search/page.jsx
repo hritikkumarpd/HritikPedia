@@ -1,193 +1,336 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import NoteCard from '../../components/NoteCard';
 import SubjectCard from '../../components/SubjectCard';
-import { INITIAL_NOTES, INITIAL_SUBJECTS, INITIAL_ARTICLES } from '@hritikpedia/shared/data';
-import { Search, BookOpen, Layers, FileText, ArrowRight, X } from 'lucide-react';
+import {
+  Search,
+  BookOpen,
+  Layers,
+  FileText,
+  ArrowRight,
+  X,
+  Loader2,
+  Compass,
+  Sparkles,
+} from 'lucide-react';
 import Link from 'next/link';
+
+const QUICK_SEARCHES = ['UPSC', 'BPSC', 'BSEB', 'CBSE', 'AKTU', 'DBMS', 'Digital Logic'];
 
 function SearchContent() {
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get('q') || '';
   const [query, setQuery] = useState(initialQuery);
+  const [results, setResults] = useState({ notes: [], subjects: [], articles: [] });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     setQuery(initialQuery);
   }, [initialQuery]);
 
-  const q = query.toLowerCase().trim();
+  useEffect(() => {
+    const q = query.trim();
 
-  const matchedNotes = q
-    ? INITIAL_NOTES.filter(
-        (n) =>
-          n.title.toLowerCase().includes(q) ||
-          n.description.toLowerCase().includes(q) ||
-          n.subjectName.toLowerCase().includes(q) ||
-          (n.topic && n.topic.toLowerCase().includes(q)) ||
-          (n.targetExamOrBoard && n.targetExamOrBoard.toLowerCase().includes(q)) ||
-          (n.department && n.department.toLowerCase().includes(q)) ||
-          (n.medium && n.medium.toLowerCase().includes(q)) ||
-          (n.topicsCovered && n.topicsCovered.some((t) => t.toLowerCase().includes(q)))
-      )
-    : [];
+    if (!q) {
+      setResults({ notes: [], subjects: [], articles: [] });
+      setError('');
+      setLoading(false);
+      return undefined;
+    }
 
-  const matchedSubjects = q
-    ? INITIAL_SUBJECTS.filter(
-        (s) =>
-          s.name.toLowerCase().includes(q) ||
-          s.description.toLowerCase().includes(q) ||
-          s.code.toLowerCase().includes(q) ||
-          (s.targetExamOrBoard && s.targetExamOrBoard.toLowerCase().includes(q)) ||
-          (s.department && s.department.toLowerCase().includes(q))
-      )
-    : [];
+    let cancelled = false;
+    setLoading(true);
+    setError('');
 
-  const matchedArticles = q
-    ? INITIAL_ARTICLES.filter(
-        (a) =>
-          a.title.toLowerCase().includes(q) ||
-          a.excerpt.toLowerCase().includes(q) ||
-          a.category.toLowerCase().includes(q)
-      )
-    : [];
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`, { cache: 'no-store' });
+        const data = await res.json();
 
+        if (cancelled) return;
+
+        if (res.ok) {
+          setResults({
+            notes: data.notes || [],
+            subjects: data.subjects || [],
+            articles: data.articles || [],
+          });
+        } else {
+          setError(data.error || 'Search is temporarily unavailable. Please try again.');
+          setResults({ notes: [], subjects: [], articles: [] });
+        }
+      } catch {
+        if (!cancelled) {
+          setError('Network error while searching. Please check your connection.');
+          setResults({ notes: [], subjects: [], articles: [] });
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }, 250);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [query]);
+
+  const { notes: matchedNotes, subjects: matchedSubjects, articles: matchedArticles } = results;
   const total = matchedNotes.length + matchedSubjects.length + matchedArticles.length;
+  const hasQuery = Boolean(query.trim());
 
   return (
-    <main className="flex-1 py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Search Input Box */}
-        <div className="max-w-3xl mx-auto mb-10">
-          <div className="relative flex items-center bg-white rounded-2xl border border-slate-300 shadow-sm focus-within:ring-2 focus-within:ring-[#087BFF] focus-within:border-[#087BFF] p-2">
-            <Search className="w-5 h-5 text-slate-400 ml-3 pointer-events-none" />
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search UPSC, BPSC, BSEB 10th/12th, CBSE, AKTU, BEU, DBMS..."
-              className="w-full px-3 py-2 text-sm sm:text-base bg-transparent text-[#26354B] focus:outline-hidden"
-              autoFocus
-            />
-            {query && (
-              <button
-                onClick={() => setQuery('')}
-                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-full mr-2 cursor-pointer"
-                aria-label="Clear query"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
+    <main id="main-content" className="flex-1">
+      {/* Search Hero */}
+      <section className="relative overflow-hidden border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 py-10 sm:py-14">
+        <div className="container-page relative">
+          <nav
+            className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500"
+            aria-label="Breadcrumb"
+          >
+            <Link href="/" className="hover:text-primary transition-colors">
+              Home
+            </Link>
+            <span className="opacity-40">/</span>
+            <span className="text-slate-900 dark:text-white">Universal Search</span>
+          </nav>
 
-          <div className="flex flex-wrap items-center justify-between gap-2 mt-3 text-xs text-slate-500 px-2">
-            <span>
-              {query ? (
-                <>Found <strong className="text-[#07172B]">{total}</strong> results for &ldquo;{query}&rdquo;</>
-              ) : (
-                'Enter a search term above'
-              )}
-            </span>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="font-bold text-slate-400">Quick Searches:</span>
-              <button onClick={() => setQuery('UPSC')} className="hover:text-[#087BFF] underline cursor-pointer">UPSC</button>
-              <button onClick={() => setQuery('BPSC')} className="hover:text-[#087BFF] underline cursor-pointer">BPSC</button>
-              <button onClick={() => setQuery('BSEB')} className="hover:text-[#087BFF] underline cursor-pointer">BSEB 12th</button>
-              <button onClick={() => setQuery('CBSE')} className="hover:text-[#087BFF] underline cursor-pointer">CBSE</button>
-              <button onClick={() => setQuery('AKTU')} className="hover:text-[#087BFF] underline cursor-pointer">AKTU B.Tech</button>
-              <button onClick={() => setQuery('DBMS')} className="hover:text-[#087BFF] underline cursor-pointer">DBMS</button>
-            </div>
-          </div>
-        </div>
-
-        {/* Results Sections */}
-        {query && total === 0 && (
-          <div className="max-w-xl mx-auto p-12 text-center bg-white rounded-2xl border border-slate-200">
-            <Search className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-            <h3 className="text-base font-bold text-[#07172B]">No exact matches found</h3>
-            <p className="text-xs text-slate-500 mt-1">
-              Try searching with broader terms like &ldquo;UPSC&rdquo;, &ldquo;BPSC&rdquo;, &ldquo;Physics&rdquo;, &ldquo;DBMS&rdquo;, or &ldquo;Operating Systems&rdquo;.
+          <div className="mt-4 max-w-3xl">
+            <span className="badge badge-primary">Academic Catalog Search</span>
+            <h1 className="mt-2 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+              Search Notes, Subjects &amp; Guides
+            </h1>
+            <p className="mt-2 text-sm sm:text-base text-slate-600 dark:text-slate-400">
+              Type an exam stream, topic name, or syllabus subject code to discover verified notes and study resources.
             </p>
           </div>
-        )}
 
-        {/* Notes Results (Highest Priority) */}
-        {matchedNotes.length > 0 && (
-          <div className="mb-12">
-            <h2 className="text-lg font-bold text-[#07172B] mb-4 flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-[#087BFF]" />
-              <span>Matched Study Notes ({matchedNotes.length})</span>
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {matchedNotes.map((note) => (
-                <NoteCard key={note.id} note={note} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Subjects Results */}
-        {matchedSubjects.length > 0 && (
-          <div className="mb-12">
-            <h2 className="text-lg font-bold text-[#07172B] mb-4 flex items-center gap-2">
-              <Layers className="w-4 h-4 text-[#087BFF]" />
-              <span>Matched Subjects ({matchedSubjects.length})</span>
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {matchedSubjects.map((sub) => (
-                <SubjectCard key={sub.id} subject={sub} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Articles Results */}
-        {matchedArticles.length > 0 && (
-          <div className="mb-12">
-            <h2 className="text-lg font-bold text-[#07172B] mb-4 flex items-center gap-2">
-              <FileText className="w-4 h-4 text-[#087BFF]" />
-              <span>Matched Educational Articles ({matchedArticles.length})</span>
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {matchedArticles.map((art) => (
-                <article
-                  key={art.id}
-                  className="p-5 bg-white rounded-2xl border border-slate-200 flex flex-col justify-between"
+          <div className="mt-8 max-w-2xl">
+            <div className="flex items-center gap-2.5 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/80 p-2 pl-4 shadow-sm backdrop-blur-md transition-all focus-within:border-primary focus-within:bg-white dark:focus-within:bg-slate-900 focus-within:ring-2 focus-within:ring-primary/20">
+              <Search className="h-5 w-5 shrink-0 text-slate-400" />
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search UPSC, BPSC, BSEB, CBSE, AKTU, DBMS, Digital Logic..."
+                aria-label="Search study catalogue"
+                className="min-w-0 flex-1 bg-transparent py-1.5 text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none"
+                autoFocus
+              />
+              {loading && <Loader2 className="mr-1 h-5 w-5 shrink-0 animate-spin text-primary" />}
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => setQuery('')}
+                  aria-label="Clear query"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
-                  <div>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-[#087BFF] uppercase">
-                      {art.category}
-                    </span>
-                    <h3 className="text-sm font-bold text-[#07172B] mt-2 mb-1 hover:text-[#087BFF]">
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+              <span className="hidden sm:inline-flex items-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1 text-[10px] font-bold text-slate-400">
+                ⌘K
+              </span>
+            </div>
+
+            {/* Quick search chips */}
+            <div className="mt-3.5 flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mr-1">
+                Suggested:
+              </span>
+              {QUICK_SEARCHES.map((term) => (
+                <button
+                  key={term}
+                  type="button"
+                  onClick={() => setQuery(term)}
+                  className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/60 px-2.5 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:border-primary hover:text-primary transition-colors cursor-pointer"
+                >
+                  {term}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-6 flex min-h-[1.5rem] items-center gap-2 text-xs font-semibold text-slate-500">
+            {!hasQuery ? (
+              <>
+                <Compass className="h-4 w-4 text-primary" />
+                <span>Type keywords above to search across our full catalog</span>
+              </>
+            ) : loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                <span>Searching our verified database...</span>
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4 text-amber-500" />
+                <span>
+                  Found <strong className="text-slate-900 dark:text-white">{total}</strong>{' '}
+                  {total === 1 ? 'match' : 'matches'} for{' '}
+                  <strong className="text-primary">&ldquo;{query.trim()}&rdquo;</strong>
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Results Section */}
+      <section className="py-10 sm:py-14">
+        <div className="container-page">
+          {error && (
+            <div className="mx-auto mb-8 max-w-xl rounded-2xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/40 p-4 text-center text-xs font-semibold text-red-600 dark:text-red-400">
+              {error}
+            </div>
+          )}
+
+          {hasQuery && !loading && !error && total === 0 && (
+            <div className="card mx-auto max-w-md p-10 text-center border border-slate-200 dark:border-slate-800">
+              <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400">
+                <Search className="h-7 w-7" />
+              </span>
+              <h3 className="mt-4 text-lg font-bold text-slate-900 dark:text-white">
+                No Exact Matches Found
+              </h3>
+              <p className="mt-2 text-xs text-slate-500 leading-relaxed">
+                We couldn&apos;t find anything matching &ldquo;{query}&rdquo;. Try searching for an exam category (UPSC, BPSC, BSEB) or a general subject (Physics, DBMS).
+              </p>
+              <div className="mt-5 flex flex-wrap justify-center gap-2">
+                {['DBMS', 'Digital Logic', 'Bihar STET'].map((term) => (
+                  <button
+                    key={term}
+                    type="button"
+                    onClick={() => setQuery(term)}
+                    className="btn btn-secondary btn-sm text-xs"
+                  >
+                    Try {term}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Matched Study Notes */}
+          {matchedNotes.length > 0 && (
+            <div className="mb-12">
+              <div className="mb-6 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+                <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <BookOpen className="h-4 w-4" />
+                  </span>
+                  Study Notes
+                  <span className="badge badge-primary">{matchedNotes.length}</span>
+                </h2>
+                <Link
+                  href="/notes"
+                  className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
+                >
+                  View All Notes
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {matchedNotes.map((note) => (
+                  <NoteCard key={note.id} note={note} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Matched Subjects */}
+          {matchedSubjects.length > 0 && (
+            <div className="mb-12">
+              <div className="mb-6 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+                <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                    <Layers className="h-4 w-4" />
+                  </span>
+                  Subjects &amp; Streams
+                  <span className="badge badge-secondary">{matchedSubjects.length}</span>
+                </h2>
+                <Link
+                  href="/subjects"
+                  className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
+                >
+                  View All Subjects
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {matchedSubjects.map((sub) => (
+                  <SubjectCard key={sub.id} subject={sub} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Matched Articles */}
+          {matchedArticles.length > 0 && (
+            <div className="mb-8">
+              <div className="mb-6 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+                <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                    <FileText className="h-4 w-4" />
+                  </span>
+                  Exam Guides &amp; Articles
+                  <span className="badge badge-secondary">{matchedArticles.length}</span>
+                </h2>
+                <Link
+                  href="/articles"
+                  className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
+                >
+                  All Articles
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {matchedArticles.map((art) => (
+                  <article key={art.id} className="card card-hover flex flex-col p-6 border border-slate-200 dark:border-slate-800">
+                    <span className="badge badge-secondary self-start">{art.category}</span>
+                    <h3 className="mt-3 text-lg font-bold leading-snug text-slate-900 dark:text-white hover:text-primary transition-colors">
                       <Link href={`/articles/${art.slug}`}>{art.title}</Link>
                     </h3>
-                    <p className="text-xs text-slate-500 line-clamp-2">{art.excerpt}</p>
-                  </div>
-                  <Link
-                    href={`/articles/${art.slug}`}
-                    className="mt-4 text-xs font-bold text-[#087BFF] hover:underline flex items-center gap-1"
-                  >
-                    <span>Read Article</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </article>
-              ))}
+                    <p className="mt-2 line-clamp-2 flex-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                      {art.excerpt}
+                    </p>
+                    <Link
+                      href={`/articles/${art.slug}`}
+                      className="mt-4 inline-flex items-center gap-1.5 border-t border-slate-100 dark:border-slate-800 pt-3 text-xs font-bold text-primary"
+                    >
+                      Read Guide
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </article>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      </section>
     </main>
   );
 }
 
 export default function SearchPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-[#F5F8FC]">
+    <div className="flex min-h-screen flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       <Header />
-      <Suspense fallback={<div className="p-12 text-center text-sm text-slate-500">Loading search engine...</div>}>
+      <Suspense
+        fallback={
+          <div className="flex flex-1 items-center justify-center py-24">
+            <div className="text-center">
+              <Loader2 className="mx-auto h-7 w-7 animate-spin text-primary" />
+              <p className="mt-3 text-xs font-bold text-slate-500">Opening search index...</p>
+            </div>
+          </div>
+        }
+      >
         <SearchContent />
       </Suspense>
       <Footer />

@@ -1,9 +1,17 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_key_change_in_production_min_32_chars';
+const DEV_JWT_SECRET = 'dev_secret_key_change_in_production_min_32_chars';
+const JWT_SECRET = process.env.JWT_SECRET || DEV_JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 const SALT_ROUNDS = 12;
+
+function resolveJwtSecret() {
+  if (process.env.NODE_ENV === 'production' && (!process.env.JWT_SECRET || process.env.JWT_SECRET === DEV_JWT_SECRET)) {
+    throw new Error('FATAL: JWT_SECRET must be set to a strong secret in production');
+  }
+  return process.env.JWT_SECRET || DEV_JWT_SECRET;
+}
 
 /**
  * Securely hashes a plain-text password using bcrypt.
@@ -41,7 +49,7 @@ export function signToken(payload) {
     name: payload.name,
     sessionId: payload.sessionId || Math.random().toString(36).substring(2, 15),
   };
-  return jwt.sign(safePayload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  return jwt.sign(safePayload, resolveJwtSecret(), { expiresIn: JWT_EXPIRES_IN });
 }
 
 /**
@@ -52,10 +60,25 @@ export function signToken(payload) {
 export function verifyToken(token) {
   if (!token) return null;
   try {
-    return jwt.verify(token, JWT_SECRET);
+    return jwt.verify(token, resolveJwtSecret());
   } catch {
     return null;
   }
+}
+
+/**
+ * Decides whether session cookies must carry the `Secure` flag.
+ *
+ * Production defaults to secure-only so HTTPS deployments never leak the
+ * session over plain HTTP. `COOKIE_SECURE=false` is an explicit escape hatch
+ * for self-hosted production deployments that terminate TLS upstream and
+ * still expose plain HTTP to the browser (not recommended).
+ * @returns {boolean}
+ */
+export function shouldUseSecureCookies() {
+  if (process.env.COOKIE_SECURE === 'true') return true;
+  if (process.env.COOKIE_SECURE === 'false') return false;
+  return process.env.NODE_ENV === 'production';
 }
 
 /**
@@ -107,5 +130,6 @@ export default {
   verifyPassword,
   signToken,
   verifyToken,
+  shouldUseSecureCookies,
   extractTokenFromRequest,
 };

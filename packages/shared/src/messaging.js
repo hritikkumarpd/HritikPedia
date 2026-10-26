@@ -7,6 +7,61 @@
  * 3. WhatsApp Business Cloud API - Safe off-by-default
  */
 
+import crypto from 'crypto';
+
+const UNSUBSCRIBE_SECRET =
+  process.env.JWT_SECRET || 'hritikpedia_unsubscribe_hmac_fallback_secret_2026';
+
+/**
+ * Creates a signed, tamper-proof unsubscribe token for a subscriber email.
+ * No database token storage required; rotating JWT_SECRET invalidates old links.
+ */
+export function createUnsubscribeToken(email) {
+  if (!email || typeof email !== 'string') return '';
+  const clean = email.toLowerCase().trim();
+  const signature = crypto
+    .createHmac('sha256', UNSUBSCRIBE_SECRET)
+    .update(clean)
+    .digest('hex');
+  return `${Buffer.from(clean, 'utf8').toString('base64url')}.${signature}`;
+}
+
+/**
+ * Verifies an unsubscribe token and returns the email address, or null.
+ */
+export function verifyUnsubscribeToken(token) {
+  if (!token || typeof token !== 'string') return null;
+  const separator = token.lastIndexOf('.');
+  if (separator <= 0) return null;
+
+  const encoded = token.slice(0, separator);
+  const signature = token.slice(separator + 1);
+  if (!/^[a-f0-9]{64}$/i.test(signature)) return null;
+
+  let email = '';
+  try {
+    email = Buffer.from(encoded, 'base64url').toString('utf8').toLowerCase().trim();
+  } catch {
+    return null;
+  }
+
+  if (!email || email.length > 255) return null;
+
+  const expected = crypto
+    .createHmac('sha256', UNSUBSCRIBE_SECRET)
+    .update(email)
+    .digest('hex');
+
+  try {
+    const provided = Buffer.from(signature, 'hex');
+    const computed = Buffer.from(expected, 'hex');
+    if (provided.length !== computed.length) return null;
+    return crypto.timingSafeEqual(provided, computed) ? email : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Validates Indian 10-digit mobile number or E.164 phone number
  */

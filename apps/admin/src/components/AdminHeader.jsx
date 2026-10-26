@@ -1,69 +1,143 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { LogOut, Shield, Database, Bell } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import ThemeToggle from './ThemeToggle';
+import { ChevronDown, LogOut, ExternalLink, ShieldCheck } from 'lucide-react';
+
+const PAGE_TITLES = {
+  '/': 'Operations Overview',
+  '/notes': 'Product & Notes Catalog',
+  '/orders': 'Transactions & Invoices',
+  '/users': 'User Accounts & Roles',
+  '/coupons': 'Promotional Coupons',
+  '/newsletter': 'Newsletter Subscribers',
+  '/security': 'Audit & Security Logs',
+  '/pdf-policies': 'Document Security & Watermarking',
+  '/advertising': 'Ad Slots & Sponsorships',
+};
+
+const ROLE_LABELS = {
+  super_admin: 'Super Admin',
+  content_admin: 'Content Admin',
+  marketing_admin: 'Marketing Admin',
+  support_admin: 'Support Admin',
+  security_analyst: 'Security Analyst',
+};
 
 export default function AdminHeader({ user }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const menuRef = useRef(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const displayName = user?.name || 'Administrator';
+  const displayRole =
+    ROLE_LABELS[user?.role] || (user?.role ? user.role.replace(/_/g, ' ') : 'Administrator');
+  const pageTitle = PAGE_TITLES[pathname] || 'Admin Console';
+  const initial = displayName.trim().charAt(0).toUpperCase() || 'A';
+
+  useEffect(() => {
+    setDropdownOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!dropdownOpen) return undefined;
+    const handleClick = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) setDropdownOpen(false);
+    };
+    const handleKey = (event) => {
+      if (event.key === 'Escape') setDropdownOpen(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('keydown', handleKey);
+    };
+  }, [dropdownOpen]);
 
   const handleLogout = async () => {
     try {
       await fetch('/api/admin/auth/logout', { method: 'POST' });
-      router.push('/login');
-      router.refresh();
-    } catch (err) {
-      console.error('Logout error:', err);
+    } catch {
+      // The redirect below still clears local state
     }
-  };
-
-  const getRoleBadgeColor = (role) => {
-    switch (role) {
-      case 'super_admin':
-        return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
-      case 'security_analyst':
-        return 'bg-red-500/10 text-red-400 border-red-500/20';
-      case 'content_admin':
-        return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-      default:
-        return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
-    }
+    router.push('/login');
+    router.refresh();
   };
 
   return (
-    <header className="h-16 bg-[#07172B]/80 backdrop-blur-md border-b border-slate-800 px-6 flex items-center justify-between shrink-0 sticky top-0 z-30">
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2 text-xs text-slate-400">
-          <Database className="w-3.5 h-3.5 text-emerald-400" />
-          <span>PostgreSQL Active</span>
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+    <header className="sticky top-0 z-30 shrink-0 border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md">
+      <div className="flex h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <div className="flex min-w-0 items-center gap-2.5 text-xs">
+          <span className="hidden font-bold text-slate-400 sm:inline">Admin</span>
+          <span className="hidden text-slate-300 dark:text-slate-700 sm:inline">/</span>
+          <h1 className="truncate text-sm font-bold text-slate-900 dark:text-white">{pageTitle}</h1>
         </div>
-      </div>
 
-      <div className="flex items-center gap-4">
-        {user && (
-          <div className="flex items-center gap-3">
-            <div className="text-right">
-              <p className="text-xs font-semibold text-white">{user.name || 'Staff'}</p>
-              <p className="text-[11px] text-slate-400">{user.email}</p>
-            </div>
+        <div className="flex shrink-0 items-center gap-3">
+          <a
+            href={process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-primary transition-colors sm:inline-flex"
+          >
+            <span>Live Student Site</span>
+            <ExternalLink className="h-3.5 w-3.5" />
+          </a>
 
-            <span
-              className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border ${getRoleBadgeColor(
-                user.role
-              )}`}
+          <ThemeToggle size="sm" />
+
+          {/* User Profile Menu */}
+          <div className="relative" ref={menuRef}>
+            <button
+              type="button"
+              onClick={() => setDropdownOpen((open) => !open)}
+              aria-expanded={dropdownOpen}
+              aria-haspopup="menu"
+              className="flex items-center gap-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 p-1.5 pr-2.5 transition-colors hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer"
             >
-              {user.role?.replace('_', ' ')}
-            </span>
-          </div>
-        )}
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-xs font-bold text-white shadow-xs">
+                {initial}
+              </span>
+              <span className="hidden max-w-[130px] truncate text-xs font-bold text-slate-800 dark:text-slate-200 sm:inline">
+                {displayName}
+              </span>
+              <ChevronDown
+                className={`h-3.5 w-3.5 text-slate-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
 
-        <button
-          onClick={handleLogout}
-          title="Sign out of console"
-          className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-800/80 rounded-lg transition-colors ml-2"
-        >
-          <LogOut className="w-4 h-4" />
-        </button>
+            {dropdownOpen && (
+              <div
+                className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl"
+                role="menu"
+              >
+                <div className="border-b border-slate-100 dark:border-slate-800 p-4">
+                  <p className="truncate text-sm font-bold text-slate-900 dark:text-white">{displayName}</p>
+                  <p className="mt-0.5 truncate text-xs text-slate-500">
+                    {user?.email || 'Admin Session'}
+                  </p>
+                  <div className="mt-2 flex items-center gap-1.5 text-[10px] font-bold text-primary uppercase tracking-wider">
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    <span>{displayRole}</span>
+                  </div>
+                </div>
+                <div className="p-2">
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    role="menuitem"
+                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Terminate Session</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </header>
   );

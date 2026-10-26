@@ -14,56 +14,48 @@ export default function GlobalError({ error, reset }) {
   const errorRef = Math.random().toString(36).substring(2, 9).toUpperCase();
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#F5F8FC] p-4 text-center">
-      <div className="max-w-md w-full bg-white p-8 sm:p-10 rounded-3xl border border-slate-200/90 shadow-md space-y-6">
+    <div className="relative flex min-h-screen flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 p-4 text-center text-slate-900 dark:text-slate-100">
+      <div className="card w-full max-w-md p-8 sm:p-10 border border-slate-200 dark:border-slate-800 shadow-xl">
         <BrandLogo size="md" className="mx-auto" />
 
-        <div className="space-y-2">
-          <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 text-rose-500 flex items-center justify-center mx-auto">
-            <AlertTriangle className="w-6 h-6" />
-          </div>
-          <h1 className="text-xl sm:text-2xl font-black text-[#07172B] tracking-tight">
-            Unexpected System Hiccup
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 leading-relaxed max-w-sm mx-auto">
-            Something unexpected interrupted the page view. Our automated diagnostic alerts have recorded this event.
-          </p>
-        </div>
+        <span className="mx-auto mt-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 shadow-sm">
+          <AlertTriangle className="h-7 w-7" />
+        </span>
 
-        <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-left">
-          <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono">
+        <span className="mt-4 badge badge-secondary">Runtime Exception Caught</span>
+        <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Unexpected Application Hiccup
+        </h1>
+        <p className="mx-auto mt-2 max-w-xs text-xs text-slate-500 leading-relaxed">
+          An unexpected interruption occurred. Our automated diagnostic alerts have logged this event for rapid triage.
+        </p>
+
+        <div className="mt-6 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 p-3.5 text-left">
+          <div className="flex items-center justify-between font-mono text-xs text-slate-400">
             <span>DIAGNOSTIC REF:</span>
-            <span className="font-bold text-slate-700">{errorRef}</span>
+            <span className="font-bold text-slate-900 dark:text-white">{errorRef}</span>
           </div>
           {error?.message && (
-            <p className="text-xs font-mono text-slate-600 mt-1 truncate">
-              {error.message}
-            </p>
+            <p className="mt-1.5 truncate font-mono text-[11px] text-red-600 dark:text-red-400 font-semibold">{error.message}</p>
           )}
         </div>
 
-        <div className="space-y-2.5">
-          <button
-            onClick={() => reset()}
-            className="w-full py-3 px-4 bg-[#087BFF] hover:bg-[#1688FF] text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <RefreshCw className="w-4 h-4" />
-            <span>Try Reloading Section</span>
+        <div className="mt-6 space-y-2.5">
+          <button onClick={() => reset()} className="btn btn-primary w-full justify-center">
+            <RefreshCw className="h-4 w-4" />
+            Reload This Section
           </button>
 
-          <Link
-            href="/"
-            className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
-          >
-            <Home className="w-4 h-4" />
-            <span>Return to Safe Homepage</span>
+          <Link href="/" className="btn btn-secondary w-full justify-center">
+            <Home className="h-4 w-4" />
+            Return to Homepage
           </Link>
         </div>
 
-        <div className="pt-2 text-[11px] text-slate-400 flex items-center justify-center gap-1.5">
-          <ShieldAlert className="w-3.5 h-3.5" />
-          <span>Hritikpedia High-Availability Core</span>
-        </div>
+        <p className="mt-5 flex items-center justify-center gap-1.5 text-[11px] text-slate-400 font-medium">
+          <ShieldAlert className="h-3.5 w-3.5 text-primary" />
+          <span>HritikPedia High-Availability Core</span>
+        </p>
       </div>
     </div>
   );
